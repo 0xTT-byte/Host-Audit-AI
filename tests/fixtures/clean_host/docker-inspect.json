@@ -1,0 +1,26 @@
+[
+  {
+    "Id": "d4e5f6a1b2c3",
+    "Name": "/clean-web",
+    "Config": {
+      "User": "1001:1001"
+    },
+    "HostConfig": {
+      "Privileged": false,
+      "NetworkMode": "bridge",
+      "CapAdd": null,
+      "Binds": [
+        "/var/log/nginx:/var/log/nginx:ro"
+      ]
+    },
+    "Mounts": [
+      {
+        "Type": "bind",
+        "Source": "/var/log/nginx",
+        "Destination": "/var/log/nginx",
+        "Mode": "ro",
+        "RW": false
+      }
+    ]
+  }
+]

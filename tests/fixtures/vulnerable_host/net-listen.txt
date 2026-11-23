@@ -1,0 +1,4 @@
+tcp   LISTEN 0      128          0.0.0.0:22        0.0.0.0:*    users:(("sshd",pid=950,fd=3))
+tcp   LISTEN 0      511          0.0.0.0:80        0.0.0.0:*    users:(("nginx",pid=1120,fd=6))
+tcp   LISTEN 0      128          0.0.0.0:5432      0.0.0.0:*    users:(("postgres",pid=1200,fd=5))
+tcp   LISTEN 0      128          0.0.0.0:9000      0.0.0.0:*    users:(("php-fpm",pid=1300,fd=4))

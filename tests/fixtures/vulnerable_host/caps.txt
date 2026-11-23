@@ -1,0 +1,2 @@
+/usr/bin/ping cap_net_raw+ep
+/usr/bin/tar cap_dac_override=ep

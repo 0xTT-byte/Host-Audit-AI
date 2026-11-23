@@ -1,0 +1,19 @@
+# Evidence and audit outputs
+evidence/
+*.db
+*.sqlite3
+findings.json
+triage_report.json
+*.local.yml
+
+# Python environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Build and packaging
+dist/
+build/
+*.egg-info/

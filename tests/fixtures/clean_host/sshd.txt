@@ -1,0 +1,6 @@
+permitrootlogin no
+passwordauthentication no
+maxauthtries 3
+allowusers admin deploy
+port 22
+protocol 2

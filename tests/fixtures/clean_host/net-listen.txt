@@ -1,0 +1,5 @@
+tcp   LISTEN 0      128          0.0.0.0:22        0.0.0.0:*    users:(("sshd",pid=950,fd=3))
+tcp   LISTEN 0      511          0.0.0.0:80        0.0.0.0:*    users:(("nginx",pid=1120,fd=6))
+tcp   LISTEN 0      511          0.0.0.0:443       0.0.0.0:*    users:(("nginx",pid=1120,fd=7))
+tcp   LISTEN 0      128        127.0.0.1:5432      0.0.0.0:*    users:(("postgres",pid=1200,fd=5))
+tcp   LISTEN 0      128        127.0.0.1:6379      0.0.0.0:*    users:(("redis-server",pid=1250,fd=4))

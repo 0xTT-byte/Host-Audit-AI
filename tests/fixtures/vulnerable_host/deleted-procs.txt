@@ -1,0 +1,1 @@
+lrwxrwxrwx 1 root root 0 Nov 23 12:00 /proc/4567/exe -> /tmp/hidden_miner (deleted)
