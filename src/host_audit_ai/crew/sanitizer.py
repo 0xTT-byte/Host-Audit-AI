@@ -483,6 +483,14 @@ def build_sanitized_queries(
             service_name = "linux-host"
 
         package_version = _match_package_version(service_name, snapshot, forbidden_tokens)
+        if (
+            service_name == "linux-kernel"
+            and package_version == "unknown"
+            and kernel_version != "unknown"
+            and _PACKAGE_VER_RE.fullmatch(kernel_version)
+            and not _text_contains_forbidden(kernel_version, forbidden_tokens)
+        ):
+            package_version = kernel_version
         cwe_id = _RULE_TO_CWE.get(rule_id)
 
         key = (service_name, package_version, rule_id)

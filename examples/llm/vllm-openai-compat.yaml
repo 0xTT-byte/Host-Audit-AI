@@ -1,0 +1,8 @@
+# Self-hosted OpenAI-compatible vLLM endpoint.
+# Provide authentication via HOST_AUDIT_LLM_API_KEY if your vLLM server requires a bearer token.
+model: "openai/Qwen/Qwen2.5-14B-Instruct"
+base_url: "http://127.0.0.1:8000/v1"
+temperature: 0.1
+stream: false
+max_iter: 5
+allow_delegation: false

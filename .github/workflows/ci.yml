@@ -51,5 +51,38 @@ jobs:
       - name: Run MyPy Static Analysis
         run: mypy src tests
 
-      - name: Run Pytest
-        run: pytest -v
+      - name: Run Pytest (Unit & Security)
+        run: pytest -v -m "not e2e"
+
+  e2e-docker:
+    name: E2E Docker Live SSH Lab (Python 3.12)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Create virtual environment
+        run: |
+          uv venv --python 3.12 .venv
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> $GITHUB_ENV
+
+      - name: Install core + dev dependencies
+        run: uv pip install -e ".[dev]"
+
+      - name: Verify Docker daemon availability
+        run: docker info
+
+      - name: Run Docker E2E Test Suite
+        run: pytest -v -m e2e

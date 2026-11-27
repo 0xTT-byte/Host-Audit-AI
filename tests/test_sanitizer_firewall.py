@@ -178,3 +178,18 @@ def test_assert_no_host_leakage_blocks_forged_items(forged_kwargs: dict[str, str
 
     with pytest.raises(SanitizationLeakError):
         assert_no_host_leakage([forged], forbidden)
+
+
+def test_sanitizer_populates_kernel_package_version_when_unknown() -> None:
+    _, env = OfflineTransport(FIXTURES_DIR / "ubuntu_vulnerable.raw").collect()
+    snapshot = parse_envelope(env)
+    snapshot.packages = []
+    snapshot.metadata.kernel_release = "6.8.0-45-generic"
+    report = evaluate(snapshot, load_baseline())
+
+    items = build_sanitized_queries(report, snapshot, max_items=30)
+    kernel_items = [item for item in items if item.service_name == "linux-kernel"]
+    assert kernel_items, "Expected at least one linux-kernel query item from SYS-* findings"
+    for item in kernel_items:
+        assert item.package_version == "6.8.0"
+        assert item.kernel_version == "6.8.0"

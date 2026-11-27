@@ -1,0 +1,7 @@
+# Larger local Ollama model profile (32B-class) with higher reasoning budget.
+model: "ollama/qwen2.5:32b"
+base_url: "http://127.0.0.1:11434"
+temperature: 0.1
+stream: false
+max_iter: 6
+allow_delegation: false

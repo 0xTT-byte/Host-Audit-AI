@@ -262,6 +262,24 @@ def test_parse_containers_ioc_and_auth() -> None:
     assert ioc.ld_preload_contents == "/lib/rootkit.so"
     assert ioc.deleted_binary_processes[0].pid == 888
 
+    # Multi-directory `ls -la /tmp /var/tmp /dev/shm` format from live Linux hosts
+    ls_multi_raw = (
+        "=== TEMPORARY AND SHARED MEMORY DIRECTORIES ===\n"
+        "/dev/shm:\n"
+        "total 4\n"
+        "drwxrwxrwt 2 root root 60 Nov 27 12:00 .\n"
+        "-rwxr-xr-x 1 root root 32 Nov 27 12:00 dropper.sh\n\n"
+        "/tmp:\n"
+        "total 4\n"
+        "-rwxr-xr-x 1 root root 48 Nov 27 12:00 staged_miner.elf\n"
+        "=== PRELOAD AND BOOTSTRAP HOOKS ===\n"
+    )
+    ioc_multi = parse_ioc_surface(ls_multi_raw, warnings)
+    assert ioc_multi.temp_executables == [
+        "/dev/shm/dropper.sh",  # noqa: S108
+        "/tmp/staged_miner.elf",  # noqa: S108
+    ]
+
     auth = parse_auth_logs(
         "Failed password for root from 1.2.3.4\nAccepted publickey for ubuntu from 1.2.3.5\n",
         warnings,

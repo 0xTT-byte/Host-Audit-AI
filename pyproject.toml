@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "host-audit-ai"
-version = "0.6.0"
+version = "1.0.0"
 description = "Agentless Linux & Docker host security auditing tool with deterministic baseline diffing and local AI triage"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
@@ -37,17 +37,10 @@ host-audit-ai = "host_audit_ai.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/host_audit_ai"]
-exclude = [
-    "src/host_audit_ai/legacy",
-]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-extend-exclude = [
-    "src/host_audit_ai/legacy",
-    "scripts",
-]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "S"]
@@ -59,10 +52,6 @@ select = ["E", "F", "I", "UP", "B", "SIM", "S"]
 python_version = "3.11"
 strict = true
 plugins = ["pydantic.mypy"]
-exclude = [
-    "^src/host_audit_ai/legacy",
-    "^scripts",
-]
 
 [[tool.mypy.overrides]]
 module = ["crewai", "crewai.*"]
@@ -70,3 +59,4 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["e2e: Docker-backed live SSH end-to-end tests"]

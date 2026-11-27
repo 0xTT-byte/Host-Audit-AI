@@ -5,6 +5,26 @@ All notable changes to `host-audit-ai` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-11-27
+
+### Added
+- **Disposable Docker E2E Security Lab (`tests/e2e/`)**:
+  - Added reproducible Ubuntu 24.04 vulnerable target (`tests/e2e/Dockerfile.vuln` and `entrypoint.sh`) seeding SSH, sudoers, shadow permissions, SUID, cron, and temporary executable findings alongside dual SSH access (`audituser` collection + `auditmcp` forced-command wrapper).
+  - Added `@pytest.mark.e2e` live SSH integration suite (`tests/e2e/test_e2e_docker.py`) validating zero target disk writes, live `RESOLVED` drift diffing, forced-command wrapper rejections (`exit 126`), SARIF 2.1.0 export, and sanitizer zero-leakage.
+- **Security, Architecture & Operator Documentation**:
+  - Added `SECURITY.md` documenting supported versions, vulnerability reporting, and the 6-layer threat model.
+  - Added `ARCHITECTURE.md` documenting end-to-end Mermaid data flow, AST module dependency matrix, schema versioning, fingerprinting, and `LLMConfig` precedence.
+  - Added ready-to-use BYOM YAML profiles under `examples/llm/` (`ollama-4b-local.yaml`, `ollama-32b.yaml`, `vllm-openai-compat.yaml`, `litellm-gateway.yaml`).
+  - Rewrote `README.md` for `v1.0.0` with `uvx` / `uv tool install` instructions, all 8 subcommands, exit code table, and accurate 31-rule catalog.
+- **OIDC Release Automation & E2E CI**:
+  - Added `.github/workflows/release.yml` triggered on `v*` tags to verify tag/version parity, run full checks, build wheels/sdists, generate `SHA256SUMS.txt` plus CycloneDX & SPDX SBOMs (`anchore/sbom-action`), publish to PyPI via OIDC Trusted Publishing, and create GitHub Releases.
+  - Updated `.github/workflows/ci.yml` to run unit/lint checks (`-m "not e2e"`) across Python 3.11–3.13 and execute live Docker E2E verification (`-m e2e`).
+
+### Changed & Removed
+- Polished `crew/sanitizer.py` so `linux-kernel` findings automatically derive `package_version` from normalized `kernel_version` when package metadata is absent.
+- Updated `parsers/containers_ioc.py` (`parse_ioc_surface`) to also track `ls -la /tmp /var/tmp /dev/shm` directory header blocks produced on live Linux hosts.
+- Retired quarantined `v0.1.0` legacy code (`src/host_audit_ai/legacy/`), obsolete root `baseline/` / `baselines/` duplicates, `collect/audit-collect.sh`, and legacy `scripts/`.
+
 ## [0.6.0] - 2026-11-27
 
 ### Added

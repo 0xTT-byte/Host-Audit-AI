@@ -1,0 +1,8 @@
+# Local 4B GGUF profile tuned for low-VRAM Ollama deployments.
+# Disables streaming and limits agent iterations for reliable JSON extraction.
+model: "ollama/hf.co/mradermacher/DeepSeek-V4-Pro-Qwen3.5-4B-UNCENSORED-heretic-GGUF:Q4_K_M"
+base_url: "http://127.0.0.1:11434"
+temperature: 0.1
+stream: false
+max_iter: 3
+allow_delegation: false

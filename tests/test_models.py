@@ -44,7 +44,7 @@ def test_raw_collector_envelope_roundtrip() -> None:
         truncated=False,
     )
     envelope = RawCollectorEnvelope(
-        collector_version="0.6.0",
+        collector_version="1.0.0",
         collected_at=now,
         hostname="audit-target-01",
         target_uri="ssh://user@audit-target-01",

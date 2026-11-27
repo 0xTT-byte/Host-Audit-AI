@@ -126,9 +126,16 @@ def parse_ioc_surface(raw_text: str, warnings: list[ParseWarning]) -> IocSurface
     auth_keys: list[FilePermCheck] = []
 
     lines = raw_text.splitlines()
+    current_temp_dir = ""
     for line in lines:
         stripped = line.strip()
-        if not stripped or stripped.startswith("===") or stripped.startswith("#"):
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("==="):
+            current_temp_dir = ""
+            continue
+        if stripped in ("/tmp:", "/var/tmp:", "/dev/shm:"):  # noqa: S108
+            current_temp_dir = stripped[:-1]
             continue
 
         # 1. Deleted binary execution e.g. ... /proc/1234/exe -> /tmp/miner (deleted)
@@ -150,13 +157,16 @@ def parse_ioc_surface(raw_text: str, warnings: list[ParseWarning]) -> IocSurface
         if line.startswith("/") and (".so" in line or "/lib" in line):
             ld_preload = line.strip()
 
-        # 3. Executables in /tmp or /dev/shm
-        if (stripped.startswith("-rwx") or stripped.startswith("-r-x")) and (
-            "/tmp/" in stripped or "/dev/shm/" in stripped  # noqa: S108
-        ):
+        # 3. Executables in /tmp or /dev/shm (both direct path lines and ls -la directory headers)
+        if stripped.startswith(("-rwx", "-r-x", "---x", "--wx")):
             parts = stripped.split()
-            if parts:
-                temp_executables.append(parts[-1])
+            if not parts:
+                continue
+            name_token = parts[-1]
+            if "/tmp/" in stripped or "/dev/shm/" in stripped:  # noqa: S108
+                temp_executables.append(name_token)
+            elif current_temp_dir in ("/tmp", "/dev/shm") and name_token not in (".", ".."):  # noqa: S108
+                temp_executables.append(f"{current_temp_dir}/{name_token}")
 
     return IocSurface(
         deleted_binary_processes=deleted_procs,

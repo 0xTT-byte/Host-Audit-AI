@@ -1,0 +1,60 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssh-server \
+    sudo \
+    cron \
+    iproute2 \
+    procps \
+    libcap2-bin \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create unprivileged audit collection user, forced-command MCP inspection user, and misconfigured dev user
+RUN useradd -m -s /bin/bash audituser && usermod -p '*' audituser \
+    && useradd -m -s /bin/bash auditmcp && usermod -p '*' auditmcp \
+    && useradd -m -s /bin/bash devuser && usermod -p '*' devuser
+
+# Install the exact forced-command wrapper bundled with host-audit-ai
+COPY src/host_audit_ai/collectors/scripts/host-audit-wrapper.sh /usr/local/bin/host-audit-wrapper
+COPY tests/e2e/entrypoint.sh /usr/local/bin/e2e-entrypoint.sh
+RUN chmod 0755 /usr/local/bin/host-audit-wrapper /usr/local/bin/e2e-entrypoint.sh
+
+# Seed intentionally vulnerable SSH settings while retaining PubkeyAuthentication for harness login
+RUN rm -f /etc/ssh/sshd_config.d/*.conf \
+    && printf '%s\n' \
+        'Port 22' \
+        'Protocol 2' \
+        'PermitRootLogin yes' \
+        'PubkeyAuthentication yes' \
+        'PasswordAuthentication yes' \
+        'PermitEmptyPasswords yes' \
+        'MaxAuthTries 10' \
+        'UsePAM yes' \
+        'Subsystem sftp /usr/lib/openssh/sftp-server' \
+        > /etc/ssh/sshd_config \
+    && mkdir -p /run/sshd \
+    && ssh-keygen -A
+
+# Seed sudoers NOPASSWD: ALL rule (group-readable by audituser while keeping 0440 mode for sudo)
+RUN printf 'devuser ALL=(ALL:ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/99-devuser \
+    && chown root:audituser /etc/sudoers.d /etc/sudoers.d/99-devuser \
+    && chmod 0750 /etc/sudoers.d \
+    && chmod 0440 /etc/sudoers.d/99-devuser
+
+# Seed filesystem, SUID, cron, and temporary executable findings
+RUN chmod 0644 /etc/shadow \
+    && cp /usr/bin/find /usr/local/bin/suid_find \
+    && chmod 4755 /usr/local/bin/suid_find \
+    && printf '#!/bin/sh\necho "harmless cron target"\n' > /tmp/evil_cron.sh \
+    && chmod 0755 /tmp/evil_cron.sh \
+    && printf '#!/bin/sh\necho "harmless staged stub"\n' > /tmp/staged_miner.elf \
+    && chmod 0755 /tmp/staged_miner.elf \
+    && printf '* * * * * root /tmp/evil_cron.sh\n' > /etc/cron.d/vuln_job \
+    && chmod 0666 /etc/cron.d/vuln_job
+
+EXPOSE 22
+
+ENTRYPOINT ["/usr/local/bin/e2e-entrypoint.sh"]

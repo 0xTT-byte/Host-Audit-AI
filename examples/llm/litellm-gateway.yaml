@@ -1,0 +1,9 @@
+# Enterprise LiteLLM Proxy / Gateway profile.
+# Set your gateway token via environment variable rather than committing secrets here:
+#   export HOST_AUDIT_LLM_API_KEY="sk-..."
+model: "openai/security-triage-model"
+base_url: "https://litellm.internal.example/v1"
+temperature: 0.1
+stream: false
+max_iter: 5
+allow_delegation: false

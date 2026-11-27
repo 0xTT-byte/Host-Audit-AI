@@ -4,197 +4,134 @@
 
 # host-audit-ai
 
-**Agentless Linux & Docker host security auditing with deterministic baseline diffing, attack-chain correlation, and scoped AI triage.**
+**Agentless Linux & Docker host security auditing with deterministic baseline diffing, pre-LLM attack-chain correlation, and air-gapped BYOM AI triage.**
 
-`host-audit-ai` separates **verified detection** from **AI reasoning**. Instead of dumping noisy scanner logs into a cloud LLM, it streams a read-only POSIX collector over SSH (or runs locally), diffs the host against a strict YAML baseline on your local machine, correlates findings into multi-stage attack paths deterministically, tracks `NEW`, `PERSISTING`, and `RESOLVED` drift in an encrypted SQLite state store, and provides scoped, read-only MCP servers for hardened AI investigation.
+`host-audit-ai` separates **verified deterministic detection** from **AI reasoning**. It streams a read-only POSIX collector (`collect.sh`) over SSH (or executes locally), parses 18 telemetry sections into a normalized `HostSnapshot`, evaluates 31 rules against a YAML baseline policy, builds deterministic attack graphs, tracks finding drift (`NEW`, `PERSISTENT`, `RESOLVED`, `REGRESSED`, `WAIVED`) in a `0o600` SQLite database, and optionally runs a 3-stage air-gapped CrewAI triage pipeline using your own local or enterprise LLM.
 
----
-
-## Why This Exists
-
-* **Observed − Expected (Zero Noise):** Traditional security scanners output hundreds of generic warnings every run. `host-audit-ai` evaluates hosts against baseline policies (`engine/baselines/default.yaml`), eliminating alert fatigue through deterministic diffing and expiring waivers.
-* **Agentless & Ephemeral:** Nothing permanent is installed on the target host. The POSIX collector streams over SSH, executes in a secure temp directory, streams framed evidence back over stdout, and cleanly wipes itself on exit via traps.
-* **Deterministic Pre-LLM Correlator:** Attack graphs (public listener -> process -> service -> privilege, SSH weak auth, container escape, persistence IOCs) are correlated deterministically in pure Python without LLM hallucination risk.
-* **Defense-in-Depth Provisioning:** For continuous auditing, `host-audit init-target` provisions a target-side POSIX forced-command wrapper (`host-audit-wrapper.sh`) restricting the auditor's SSH key strictly to 6 read-only verbs with canonical `realpath` allowlisting.
-* **Multi-Format Export & Drift Tracking:** Exports directly to JSON, SARIF 2.1.0 (native GitHub Code Scanning import), Markdown, and context-bounded `ai-bundle` packages. Tracks finding lifecycle in local SQLite (`0o600`).
-
----
-
-## Architecture
-
-```text
-[Target Server]                                   [Local Operator Machine]
-collect.sh (read-only, ephemeral)  ──SSH/Local──▶   Framed Evidence Envelope
-(or forced-command wrapper)                                  │
-                                                             ▼
-                                                    9 Pure Parsers
-                                                             │
-                                                             ▼
-                                                    31 Deterministic Rules
-                                                    (Observed vs Baseline)
-                                                             │
-                                                             ▼
-                                                Pre-LLM Graph Correlator
-                                                (4 Attack-Chain Classes)
-                                                             │
-                                     ┌───────────────────────┴───────────────────────┐
-                                     ▼                                               ▼
-                              SQLite Store                                     Exporters
-                         (0o600, Schema v1)                         (JSON, SARIF 2.1.0, Markdown,
-                      (NEW/PERSISTING/RESOLVED)                               ai-bundle)
-                                                                                     │
-                                                                                     ▼
-                                                                        [Scoped MCP Server]
-                                                                            audit-ssh
-                                                                    (Read-only, parameterized)
-```
-
----
-
-## Repository Structure
-
-```text
-Host-Audit-AI/
-├── src/
-│   └── host_audit_ai/
-│       ├── collectors/          # Read-only Bash collector & SSH/Local/Offline transports
-│       │   └── scripts/         # collect.sh and host-audit-wrapper.sh
-│       ├── parsers/             # 9 pure parsers extracting normalized host snapshot state
-│       ├── models/              # Pydantic v2 schemas (findings, reports, snapshots, diffs)
-│       ├── engine/              # 31 security rules, YAML baseline policy loader & correlator
-│       │   └── baselines/       # default.yaml baseline policy
-│       ├── storage/             # 0o600 SQLite audit store and 3-run drift diff engine
-│       ├── exporters/           # JSON, SARIF 2.1.0, Markdown, AI-bundle exporters
-│       ├── mcp_servers/         # Scoped read-only audit-ssh MCP server
-│       ├── crew/                # Jailed skills writer & crew tools adapter
-│       └── cli.py               # Typer CLI entrypoint (`host-audit`)
-├── tests/                       # Unit, integration, parser, rules, and security test suites
-├── pyproject.toml               # Package configuration & build specification
-└── CHANGELOG.md                 # Project release history
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) for module boundaries and schemas, and [SECURITY.md](SECURITY.md) for the full 6-layer threat model.
 
 ---
 
 ## Installation
 
-### Core Package (Zero AI Dependencies)
+### Core CLI (Zero AI Dependencies)
 
-Install the core auditing and deterministic analysis engine:
+Run directly with `uvx` or install into an isolated environment (only `pydantic`, `typer`, `pyyaml`, and `rich`):
+
+```bash
+# Zero-install execution
+uvx host-audit-ai scan --target local
+
+# Persistent core CLI install
+uv tool install host-audit-ai
+```
+
+### With Optional Air-Gapped AI Triage (`[crew]`)
+
+To enable `host-audit triage` with CrewAI, FastMCP (`audit-ssh`), and web research adapters:
+
+```bash
+uv tool install "host-audit-ai[crew]"
+```
+
+### From Source (Development)
 
 ```bash
 git clone https://github.com/0xTT-byte/Host-Audit-AI.git
 cd Host-Audit-AI
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-```
-
-### Optional AI / MCP Extensions
-
-To include the FastMCP `audit-ssh` server and CrewAI tooling:
-
-```bash
-pip install -e ".[crew,dev]"
+uv venv .venv && source .venv/bin/activate
+uv pip install -e ".[dev]"          # Core + tests/linters (zero AI deps)
+# or:
+uv pip install -e ".[crew,dev]"     # Full environment including [crew]
 ```
 
 ---
 
-## Quick Start & CLI Reference
+## Quick Start & Subcommand Reference
 
-`host-audit-ai` provides a unified Typer CLI: `host-audit`.
+`host-audit-ai` installs the `host-audit` (and `host-audit-ai`) CLI with 8 subcommands:
 
-### 1. Run a Security Scan
+| Command | Purpose |
+| :--- | :--- |
+| `collect` | Run the ephemeral read-only collector and emit a raw dump or JSON envelope |
+| `scan` | Collect, parse, evaluate baseline/waivers, correlate chains, persist to SQLite, and gate exit code |
+| `runs` | List historical audit runs stored in local SQLite (`0o600`) |
+| `diff` | Compute finding drift (`NEW`, `PERSISTENT`, `RESOLVED`, `REGRESSED`, `WAIVED`) between two runs |
+| `export` | Export a saved run or offline JSON report to `json`, `sarif`, `markdown`, or `ai-bundle` |
+| `rules` | List and filter the 31 built-in deterministic baseline rules |
+| `init-target` | Generate an `ed25519` keypair and forced-command wrapper bundle for read-only SSH inspection |
+| `triage` | Execute the 3-stage air-gapped BYOM CrewAI triage pipeline (or `--dry-run-sanitizer`) |
 
-**Scan local machine:**
+### Examples
+
 ```bash
+# 1. Capture raw collector evidence without evaluating
+host-audit collect --target ssh://audituser@192.0.2.10:22 --out capture.json
+
+# 2. Scan a local or remote host and write SARIF 2.1.0
 host-audit scan --target local
-```
+host-audit scan --target ssh://audituser@192.0.2.10:22 --identity ~/.ssh/id_ed25519 --fail-on high --format sarif --out results.sarif
 
-**Scan a remote server over SSH:**
-```bash
-host-audit scan --target ssh://audit-user@192.168.1.50:22 --out report.json
-```
-
-**Scan an existing raw evidence dump offline:**
-```bash
-host-audit scan --offline evidence.raw --format markdown --out report.md
-```
-
-**Fail CI/CD pipeline on High or Critical findings:**
-```bash
-host-audit scan --target local --fail-on high
-```
-
-### 2. Inspect Audit History & Drift
-
-**List recent audit runs stored in SQLite:**
-```bash
+# 3. Inspect run history and compute drift
 host-audit runs --limit 10
+host-audit diff --host prod-web-01
+host-audit diff --base <run_1> --target <run_2> --fail-on-new high
+
+# 4. Export an existing run
+host-audit export <run_id> --format markdown --out summary.md
+host-audit export <run_id> --format ai-bundle --redact --out ai_bundle.json
+
+# 5. Inspect built-in rules
+host-audit rules --category ssh --severity high
+
+# 6. Provision hardened forced-command SSH inspection on a target
+host-audit init-target --key-path ~/.ssh/host_audit_ed25519 --out-dir ./target-provisioning
+
+# 7. Preview zero-PII sanitized queries or run full 3-stage BYOM triage
+host-audit triage <run_id> --dry-run-sanitizer
+host-audit triage <run_id> --llm-config examples/llm/ollama-4b-local.yaml --ssh-target ssh://auditmcp@192.0.2.10:22 --identity ~/.ssh/host_audit_ed25519
 ```
 
-**Diff two audit runs to detect newly introduced, persisting, or resolved findings:**
-```bash
-host-audit diff <prior-run-id> <current-run-id>
-```
-
-### 3. Export Reports
-
-Export any prior run into JSON, SARIF 2.1.0, Markdown, or an AI context bundle:
-
-```bash
-host-audit export <run-id> --format sarif --out results.sarif
-host-audit export <run-id> --format markdown --out audit-summary.md
-host-audit export <run-id> --format ai-bundle --out ai_context.json
-```
-
-### 4. Hardened Target Provisioning (`init-target`)
-
-Provision an audit target with a restricted forced-command SSH wrapper (`host-audit-wrapper.sh`):
-
-```bash
-host-audit init-target --pubkey ~/.ssh/id_ed25519.pub --output-dir ./target-provisioning
-```
-
-This generates:
-* `host-audit-wrapper.sh`: POSIX wrapper enforcing 6 read-only verbs (`ping`, `inspect-unit`, `read-config`, `journal-slice`, `inspect-process`, `list-connections`).
-* `authorized_keys.snippet`: Hardened line restricting the key (`command="/usr/local/bin/host-audit-wrapper",restrict ...`).
-* `INSTALL.md`: Deployment instructions.
+Pre-tuned BYOM LLM configuration profiles for Ollama (4B GGUF & 32B), vLLM, and LiteLLM proxies are provided in [examples/llm/](examples/llm/).
 
 ---
 
-## Deterministic Rule Set
+## Exit Codes
 
-The engine evaluates 31 security rules across 7 categories:
+| Code | Meaning |
+| :---: | :--- |
+| `0` | Success: command completed cleanly and zero unwaived findings (or `NEW`/`REGRESSED` drift findings) met the threshold |
+| `1` | Runtime, validation, transport, parsing, or configuration error |
+| `2` | Policy gate violated: active findings in `scan --fail-on` (default: `high`) or new regressions in `diff --fail-on-new` met/exceeded threshold |
 
-| Category | Rules | Description |
+---
+
+## Deterministic Rule Catalog (31 Rules)
+
+| Category | Rule IDs | Coverage |
 | :--- | :--- | :--- |
-| **Exposure (`EXP`)** | `EXP-001` - `EXP-003` | Wildcard listeners, unauthorized public ports, non-loopback database binds |
-| **SSH & Users (`SSH`, `USR`)** | `SSH-001` - `SSH-003`, `USR-001` - `USR-003` | Root login, password auth, non-standard port, UID 0 accounts, empty passwords |
-| **Containers (`CNT`)** | `CNT-001` - `CNT-005` | Exposed Docker/Podman sockets, privileged mode, host namespace sharing, root mounts |
-| **Filesystem & Cron (`FS`, `CRN`)** | `FS-001` - `FS-004`, `CRN-001` - `CRN-002` | World-writable shadow/passwd, SUID GTFOBins, writable cron jobs |
-| **Privilege Escalation (`PRV`)** | `PRV-001` - `PRV-004` | Sudo NOPASSWD, wildcards in sudoers, file capabilities (cap_setuid) |
-| **Kernel & Firewall (`KRN`, `FW`)** | `KRN-001` - `KRN-004`, `FW-001` - `FW-003` | IP forwarding, SYN cookies, ptrace scope, inactive firewall, Docker bypass |
-| **Persistence & IOCs (`IOC`)** | `IOC-001` - `IOC-003` | Running unlinked/deleted binaries, execution from `/tmp` or `/dev/shm` |
+| **Exposure (`exposure`)** | `EXP-001` – `EXP-002` | Public/wildcard socket listeners and unauthorized/database port exposure |
+| **SSH (`ssh`)** | `SSH-001` – `SSH-006` | `PermitRootLogin`, `PasswordAuthentication`, `PermitEmptyPasswords`, `MaxAuthTries`, non-standard ports, missing `AllowUsers`/`AllowGroups` |
+| **Identity (`identity`)** | `USR-001` – `USR-002` | Non-root UID `0` accounts and interactive shells on system accounts |
+| **Containers (`containers`)** | `CNT-001` – `CNT-004` | Exposed Docker/Podman sockets, `--privileged` containers, host PID/network/IPC namespaces, sensitive host bind mounts |
+| **Filesystem (`filesystem`)** | `FS-001` – `FS-003` | Permissive `/etc/shadow` / `/etc/gshadow`, world-writable critical configs, world-writable directories missing sticky bit |
+| **Cron (`cron`)** | `CRN-001` | Scheduled cron tasks referencing `/tmp`, `/var/tmp`, or `/dev/shm` |
+| **Privilege Escalation (`privesc`)** | `PRV-001` – `PRV-004` | Sudo `NOPASSWD: ALL`, GTFOBins sudo commands, unexpected SUID/SGID binaries, dangerous Linux file capabilities |
+| **Firewall (`firewall`)** | `FW-001` – `FW-002` | Missing or inactive host firewall, Docker `DOCKER-USER` firewall bypass |
+| **Kernel (`kernel`)** | `SYS-001` – `SYS-004` | IPv4 forwarding, ASLR (`randomize_va_space`), `kptr_restrict`/`dmesg_restrict`, Yama `ptrace_scope` |
+| **IOCs (`ioc`)** | `IOC-001` – `IOC-003` | Processes executing deleted binaries, `/etc/ld.so.preload` hooks, executables staged in `/tmp` or `/dev/shm` |
 
 ---
 
-## Running Tests
-
-Verify the complete test suite:
+## Testing & Verification
 
 ```bash
-# Core test suite (194 tests, zero AI dependencies)
-pytest -v
+# Core unit & security suite (zero AI dependencies)
+pytest -v -m "not e2e"
 
-# Architecture boundaries test
-pytest -v tests/test_architecture_boundaries.py
+# Full suite including CrewAI/MCP orchestration (with [crew] extra installed)
+pytest -v -m "not e2e"
 
-# MCP & Crew security tests (with [crew] extra installed)
-pytest -v tests/test_audit_ssh_security.py tests/test_mcp_tools_isolation.py tests/test_skills_writer.py
+# Live Docker SSH + forced-command wrapper E2E suite (requires Docker daemon)
+pytest -v -m e2e
 ```
-
----
-
-## License & Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details on code style, rule development, and architecture guidelines.

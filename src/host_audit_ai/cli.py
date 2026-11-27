@@ -1004,7 +1004,7 @@ def triage(
         ),
     ] = None,
 ) -> None:
-    """Run local AI triage and root cause correlation (requires [crew] optional extra)."""
+    """Run local AI triage and root cause correlation (requires the 'crew' optional extra)."""
     if run_id is not None and input_file is not None:
         typer.secho(
             "Error: Provide either <run_id> or --input <report.json> (not both).",
