@@ -193,3 +193,27 @@ def test_sanitizer_populates_kernel_package_version_when_unknown() -> None:
     for item in kernel_items:
         assert item.package_version == "6.8.0"
         assert item.kernel_version == "6.8.0"
+
+
+def test_sanitizer_ignores_standard_distro_user_and_distro_names() -> None:
+    _, env = OfflineTransport(FIXTURES_DIR / "ubuntu_vulnerable.raw").collect()
+    snapshot = parse_envelope(env)
+    snapshot.metadata.hostname = "ubuntu-server-2404"
+    snapshot.users.append(
+        UserAccount(  # noqa: S604
+            username="ubuntu",
+            uid=1000,
+            gid=1000,
+            home="/home/ubuntu",
+            shell="/bin/bash",
+        )
+    )
+    report = evaluate(snapshot, load_baseline())
+    forbidden = collect_forbidden_tokens(report, snapshot)
+    assert "ubuntu" not in forbidden
+    assert "debian" not in forbidden
+
+    items = build_sanitized_queries(report, snapshot)
+    assert items
+    for item in items:
+        assert item.os_distro.startswith("ubuntu")

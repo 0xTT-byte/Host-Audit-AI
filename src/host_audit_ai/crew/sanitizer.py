@@ -81,6 +81,13 @@ _SYSTEM_USERNAMES = {
     "redis",
     "nginx",
     "docker",
+    "ubuntu",
+    "debian",
+    "fedora",
+    "centos",
+    "alpine",
+    "cloud-user",
+    "ec2-user",
 }
 
 _CANONICAL_SERVICE_ALIASES: dict[str, str] = {
@@ -164,6 +171,9 @@ _DISTRO_ALIASES: dict[str, str] = {
     "sles": "sles",
     "amazon": "amazon-linux",
 }
+
+_DISTRO_NAMES = {k.lower() for k in _DISTRO_ALIASES} | {v.lower() for v in _DISTRO_ALIASES.values()}
+_EXCLUDED_TOKENS = _GENERIC_HOST_WORDS | _SYSTEM_USERNAMES | _DISTRO_NAMES
 
 
 class SanitizationLeakError(Exception):
@@ -294,11 +304,15 @@ def collect_forbidden_tokens(
 
     def _add_host(raw_host: str) -> None:
         h = raw_host.strip()
-        if not h or h.lower() in _GENERIC_HOST_WORDS:
+        if not h or h.lower() in _GENERIC_HOST_WORDS or h.lower() in _DISTRO_NAMES:
             return
         tokens.add(h)
         short = h.split(".", 1)[0].strip()
-        if short and short.lower() not in _GENERIC_HOST_WORDS:
+        if (
+            short
+            and short.lower() not in _GENERIC_HOST_WORDS
+            and short.lower() not in _DISTRO_NAMES
+        ):
             tokens.add(short)
 
     _add_host(report.hostname)
@@ -323,7 +337,8 @@ def collect_forbidden_tokens(
                 except ValueError:
                     pass
         for uname in _HOME_PATH_RE.findall(text):
-            if uname.lower() not in _SYSTEM_USERNAMES:
+            low_uname = uname.lower()
+            if low_uname not in _SYSTEM_USERNAMES and low_uname not in _DISTRO_NAMES:
                 tokens.add(uname)
                 tokens.add(f"/home/{uname}")
         for fqdn in _FQDN_RE.findall(text):
@@ -333,7 +348,8 @@ def collect_forbidden_tokens(
         _add_host(snapshot.metadata.hostname)
         for u in snapshot.users:
             uname = u.username.strip()
-            if uname and uname.lower() not in _SYSTEM_USERNAMES:
+            low_u = uname.lower()
+            if uname and low_u not in _SYSTEM_USERNAMES and low_u not in _DISTRO_NAMES:
                 tokens.add(uname)
             if u.home:
                 _scan_text_for_sensitive(u.home)
@@ -343,7 +359,11 @@ def collect_forbidden_tokens(
                 tokens.add(addr)
         for proc in snapshot.processes:
             _scan_text_for_sensitive(proc.command)
-            if proc.user and proc.user.lower() not in _SYSTEM_USERNAMES:
+            if (
+                proc.user
+                and proc.user.lower() not in _SYSTEM_USERNAMES
+                and proc.user.lower() not in _DISTRO_NAMES
+            ):
                 tokens.add(proc.user)
         for pkg in snapshot.packages:
             _scan_text_for_sensitive(pkg.name)
@@ -354,14 +374,15 @@ def collect_forbidden_tokens(
         _scan_text_for_sensitive(finding.actual)
         if finding.target.startswith("user:"):
             uname = finding.target.removeprefix("user:").strip()
-            if uname and uname.lower() not in _SYSTEM_USERNAMES:
+            low_u = uname.lower()
+            if uname and low_u not in _SYSTEM_USERNAMES and low_u not in _DISTRO_NAMES:
                 tokens.add(uname)
         for ev in finding.evidence:
             _scan_text_for_sensitive(ev.snippet)
             if ev.path:
                 _scan_text_for_sensitive(ev.path)
 
-    return {t for t in tokens if len(t) >= 3}
+    return {t for t in tokens if len(t) >= 3 and t.lower() not in _EXCLUDED_TOKENS}
 
 
 def _text_contains_forbidden(text: str, forbidden_tokens: set[str]) -> str | None:
