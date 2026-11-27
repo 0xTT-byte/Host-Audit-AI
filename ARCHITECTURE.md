@@ -50,7 +50,7 @@ An AST test suite (`tests/test_architecture_boundaries.py`) enforces strict one-
 
 - **Report & Triage Schema Version:** `AuditReport.schema_version = "1.0.0"` and `TriageReport.schema_version = "1.0.0"` (`extra="forbid"` enforced on Pydantic v2 contracts).
 - **SQLite Schema Version:** `storage/db.py` tracks migrations via `PRAGMA user_version` (`SCHEMA_VERSION = 1`), enabling `PRAGMA foreign_keys = ON` and `PRAGMA journal_mode = WAL` across `hosts`, `runs`, `snapshots`, `findings`, `exposure_chains`, and `triage_runs` tables.
-- **Database Permissions:** Newly created directories default to `0o700` and database files to `0o600`. Path resolution follows: explicit `--db` argument `< HOST_AUDIT_DB < $XDG_DATA_HOME/host-audit-ai/audit.db < ~/.local/share/host-audit-ai/audit.db`.
+- **Database Permissions:** Newly created directories default to `0o700` and database files to `0o600`. Path resolution follows highest-to-lowest precedence: explicit `--db` argument > `HOST_AUDIT_DB` > `$XDG_DATA_HOME/host-audit-ai/audit.db` > `~/.local/share/host-audit-ai/audit.db`.
 
 ---
 

@@ -111,7 +111,7 @@ Pre-tuned BYOM LLM configuration profiles for Ollama (4B GGUF & 32B), vLLM, and 
 | Category | Rule IDs | Coverage |
 | :--- | :--- | :--- |
 | **Exposure (`exposure`)** | `EXP-001` – `EXP-002` | Public/wildcard socket listeners and unauthorized/database port exposure |
-| **SSH (`ssh`)** | `SSH-001` – `SSH-006` | `PermitRootLogin`, `PasswordAuthentication`, `PermitEmptyPasswords`, `MaxAuthTries`, non-standard ports, missing `AllowUsers`/`AllowGroups` |
+| **SSH (`ssh`)** | `SSH-001` – `SSH-006` | `PermitRootLogin`, `PasswordAuthentication`, `PermitEmptyPasswords`, `MaxAuthTries`, `X11Forwarding`/TCP forwarding, deprecated `Protocol 1`/`PermitUserEnvironment` |
 | **Identity (`identity`)** | `USR-001` – `USR-002` | Non-root UID `0` accounts and interactive shells on system accounts |
 | **Containers (`containers`)** | `CNT-001` – `CNT-004` | Exposed Docker/Podman sockets, `--privileged` containers, host PID/network/IPC namespaces, sensitive host bind mounts |
 | **Filesystem (`filesystem`)** | `FS-001` – `FS-003` | Permissive `/etc/shadow` / `/etc/gshadow`, world-writable critical configs, world-writable directories missing sticky bit |

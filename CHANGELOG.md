@@ -59,12 +59,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Multi-transport execution engine supporting `LocalTransport`, `SSHTransport`, and `OfflineTransport`.
 - **Deterministic Evaluation & Policy Engine (Phase 2)**:
   - 9 pure parsers extracting normalized state (network listeners, processes, services, cron, users, sudoers, file permissions, kernel parameters, firewall rules, containers, IOCs).
-  - RuleRegistry with 31 deterministic security rules spanning 7 categories (`exposure`, `ssh_users`, `containers`, `fs_cron`, `kernel_fw`, `privesc`, `ioc`).
+  - RuleRegistry with 31 deterministic security rules spanning 7 rule modules (`exposure`, `ssh_users`, `containers`, `fs_cron`, `kernel_fw`, `privesc`, `ioc`).
   - YAML baseline policy loader (`default.yaml`) and expiring waiver engine.
 - **Deterministic Exposure Correlator & SQLite Drift Store (Phase 3)**:
   - Pre-LLM 4-class graph exposure correlator constructing multi-stage attack chains without LLM inference.
   - `0o600` file-permission SQLite audit history database (`AuditStore`) with schema migrations.
-  - 3-run drift diff engine (`diff_runs`) tracking `NEW`, `PERSISTING`, and `RESOLVED` findings across audit runs.
+  - 3-run drift diff engine (`diff_runs`) tracking `NEW`, `PERSISTENT`, `RESOLVED`, `REGRESSED`, and `WAIVED` findings across audit runs.
   - Multi-format report exporters: standard JSON, SARIF 2.1.0, human-readable Markdown, and sanitized context-bounded `ai-bundle`.
   - Comprehensive CLI subcommands: `scan`, `diff`, `export`, and `runs`.
 - **Hardened Remote Provisioning & Scoped MCP Servers (Phase 4)**:

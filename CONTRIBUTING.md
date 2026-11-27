@@ -4,28 +4,32 @@ Thank you for contributing to `host-audit-ai`!
 
 ## Design Principles
 
-1. **Split Execution**: The remote collector (`collect/audit-collect.sh`) must remain agentless, read-only, and completely silent on stdout. Never introduce write operations or heavy dependencies to the target server collector.
-2. **Deterministic First**: Rules compute differences against the YAML baseline (`observed - expected`). All finding IDs must be stable SHA-256 hashes based on the rule ID, target, and evidence.
-3. **Structured Schemas**: LLM triage uses strict Pydantic JSON schemas via Ollama's native structured outputs.
+1. **Split Execution**: The remote collector (`src/host_audit_ai/collectors/scripts/collect.sh`) must remain agentless, POSIX/Bash read-only, and never write temporary files to the target filesystem (streaming framed telemetry over `stdout` only).
+2. **Deterministic First**: Rules evaluate normalized `HostSnapshot` state against the YAML baseline (`src/host_audit_ai/engine/baselines/default.yaml`). All finding fingerprints must be stable SHA-256 hashes computed via `compute_fingerprint(rule_id, normalized_target, key_attribute)` without volatile PIDs or timestamps.
+3. **Structured Schemas**: All core and `[crew]` contracts use strict Pydantic v2 models (`extra="forbid"`), and optional AI triage uses a 3-stage air-gapped CrewAI pipeline (`src/host_audit_ai/crew/`) across BYOM providers (Ollama, OpenAI-compatible, or Anthropic).
 
 ## Development Workflow
 
 1. Install development dependencies:
    ```bash
-   pip install -e ".[dev]"
+   uv pip install -e ".[dev]"
    ```
-2. Run unit tests before submitting changes:
+2. Run linters, type checks, and unit tests before submitting changes:
    ```bash
-   pytest -v
+   ruff check .
+   ruff format --check .
+   mypy src tests
+   pytest -v -m "not e2e"
    ```
-3. Ensure bash scripts pass static analysis:
+3. Ensure bash scripts pass syntax and static analysis:
    ```bash
-   shellcheck collect/audit-collect.sh scripts/run-remote-audit.sh
+   bash -n src/host_audit_ai/collectors/scripts/collect.sh src/host_audit_ai/collectors/scripts/host-audit-wrapper.sh
+   shellcheck src/host_audit_ai/collectors/scripts/collect.sh src/host_audit_ai/collectors/scripts/host-audit-wrapper.sh
    ```
 
 ## Adding New Rules
 
-- Place new rule checks in `src/host_audit/rules/`.
-- Ensure each rule populates `rule_id`, `domain`, `title`, `target`, `evidence`, `why_it_matters`, `verify_cmd`, and `remediation_hint`.
-- Provide reachability, privilege gain, and ease scores between 1 and 3.
-- Add test coverage verifying detection in `tests/fixtures/vulnerable_host/` and clean execution in `tests/fixtures/clean_host/`.
+- Place new rule checks in `src/host_audit_ai/engine/rules/` and register them via `@RuleRegistry.register(RuleMeta(...))`.
+- Add default enablement and baseline parameters in `src/host_audit_ai/engine/baselines/default.yaml`.
+- Ensure each `Finding` populates `rule_id`, `title`, `severity`, `category`, `target`, `key_attribute`, `expected`, `actual`, `evidence`, `cis_ref`, `mitre_attack`, and `fingerprint`.
+- Add unit tests in `tests/test_rules.py` verifying detection against vulnerable captures (e.g., `tests/fixtures/phase2/ubuntu_vulnerable.raw`) and clean passes against hardened fixtures (e.g., `tests/fixtures/phase2/ubuntu_hardened.raw`).
