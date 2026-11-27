@@ -1,0 +1,66 @@
+{
+  "name": "Docker Privileged & Socket Privilege Escalation",
+  "description": "Container misconfigurations and sudo privileges allowing container escape and root takeover",
+  "findings": [
+    {
+      "rule_id": "CNT-001",
+      "domain": "containers",
+      "title": "Container running in privileged mode",
+      "target": "container:web:privileged",
+      "evidence": "\"Privileged\": true",
+      "why_it_matters": "Privileged containers can access host devices and escape isolation",
+      "verify_cmd": "docker inspect web --format '{{.HostConfig.Privileged}}'",
+      "remediation_hint": "Remove --privileged and add only necessary capabilities",
+      "reachability": 2,
+      "privilege_gain": 3,
+      "ease": 2
+    },
+    {
+      "rule_id": "CNT-002",
+      "domain": "containers",
+      "title": "Host Docker socket mounted in container",
+      "target": "container:web:mounts",
+      "evidence": "/var/run/docker.sock:/var/run/docker.sock",
+      "why_it_matters": "Allows container to control host Docker daemon and create root containers",
+      "verify_cmd": "docker inspect web | grep docker.sock",
+      "remediation_hint": "Remove docker.sock volume mount",
+      "reachability": 2,
+      "privilege_gain": 3,
+      "ease": 3
+    },
+    {
+      "rule_id": "PRV-001",
+      "domain": "privesc",
+      "title": "Sudoers allows passwordless docker execution",
+      "target": "sudoers:deploy:docker",
+      "evidence": "deploy ALL=(ALL) NOPASSWD: /usr/bin/docker",
+      "why_it_matters": "User deploy can immediately spawn a root shell via docker run -v /:/host",
+      "verify_cmd": "sudo -l -U deploy",
+      "remediation_hint": "Remove NOPASSWD docker entry from sudoers",
+      "reachability": 2,
+      "privilege_gain": 3,
+      "ease": 3
+    },
+    {
+      "rule_id": "IOC-002",
+      "domain": "ioc",
+      "title": "Suspicious temporary log file",
+      "target": "file:/tmp/cache.log",
+      "evidence": "/tmp/cache.log",
+      "why_it_matters": "Temporary cache file in /tmp",
+      "verify_cmd": "ls -l /tmp/cache.log",
+      "remediation_hint": "Inspect file contents",
+      "reachability": 1,
+      "privilege_gain": 1,
+      "ease": 1
+    }
+  ],
+  "expected_clusters": [
+    {
+      "finding_ids": ["e34baaa7641f", "dd3a6678cfd9", "73b172d702e9"],
+      "hypothesis": "Privileged container and docker socket mount combined with passwordless sudo docker permit full host compromise",
+      "suggested_priority": "critical"
+    }
+  ],
+  "expected_unclustered": ["6ed5f14c9da7"]
+}

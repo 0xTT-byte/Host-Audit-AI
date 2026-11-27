@@ -1,34 +1,68 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "host-audit-ai"
-version = "0.1.0"
+version = "0.5.0"
 description = "Agentless Linux & Docker host security auditing tool with deterministic baseline diffing and local AI triage"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 authors = [
     { name = "Security Engineering Team" }
 ]
 dependencies = [
-    "pyyaml",
-    "pydantic>=2.0",
-    "requests",
-    "jinja2",
+    "pydantic>=2.7,<3.0",
+    "typer>=0.12",
+    "pyyaml>=6.0",
+    "rich>=13.0",
 ]
 
 [project.optional-dependencies]
+crew = [
+    "crewai>=0.100",
+    "crewai-tools[mcp]>=0.36",
+    "mcp>=1.2",
+]
 dev = [
-    "pytest",
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "types-PyYAML>=6.0",
 ]
 
 [project.scripts]
-host-audit = "host_audit.cli:main"
+host-audit = "host_audit_ai.cli:app"
+host-audit-ai = "host_audit_ai.cli:app"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/host_audit_ai"]
+exclude = [
+    "src/host_audit_ai/legacy",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [
+    "src/host_audit_ai/legacy",
+    "scripts",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = [
+    "^src/host_audit_ai/legacy",
+    "^scripts",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]

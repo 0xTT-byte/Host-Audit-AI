@@ -1,0 +1,110 @@
+# Default Hardening Baseline Policy for Linux & Container Hosts
+schema_version: "1.0.0"
+name: "default-hardening"
+description: "Standard Linux and Docker host security baseline policy"
+
+rules:
+  # SSH Hardening
+  SSH-001:
+    enabled: true
+    params:
+      allowed_root_login: ["no", "prohibit-password"]
+  SSH-002:
+    enabled: true
+  SSH-003:
+    enabled: true
+  SSH-004:
+    enabled: true
+    params:
+      max_auth_tries_threshold: 4
+  SSH-005:
+    enabled: true
+    params:
+      allow_x11_forwarding: false
+      allow_tcp_forwarding: true
+  SSH-006:
+    enabled: true
+
+  # Identity & Accounts
+  USR-001:
+    enabled: true
+  USR-002:
+    enabled: true
+
+  # Network Exposure & Firewall
+  EXP-001:
+    enabled: true
+    params:
+      allowed_public_ports: [22, 80, 443]
+  EXP-002:
+    enabled: true
+    params:
+      critical_ports: [2375, 2376, 3306, 5432, 6379, 9200, 27017, 11211]
+  FW-001:
+    enabled: true
+  FW-002:
+    enabled: true
+
+  # Privilege Escalation
+  PRV-001:
+    enabled: true
+  PRV-002:
+    enabled: true
+  PRV-003:
+    enabled: true
+    params:
+      allowed_suid:
+        - "/usr/bin/sudo"
+        - "/usr/bin/su"
+        - "/usr/bin/passwd"
+        - "/usr/bin/mount"
+        - "/usr/bin/umount"
+        - "/usr/bin/chfn"
+        - "/usr/bin/chsh"
+        - "/usr/bin/gpasswd"
+        - "/usr/bin/newgrp"
+        - "/usr/bin/pkexec"
+  PRV-004:
+    enabled: true
+
+  # Filesystem & Permissions
+  FS-001:
+    enabled: true
+  FS-002:
+    enabled: true
+  FS-003:
+    enabled: true
+  CRN-001:
+    enabled: true
+
+  # Kernel Hardening
+  SYS-001:
+    enabled: true
+  SYS-002:
+    enabled: true
+  SYS-003:
+    enabled: true
+  SYS-004:
+    enabled: true
+    params:
+      allow_ip_forward: false
+
+  # Containers
+  CNT-001:
+    enabled: true
+  CNT-002:
+    enabled: true
+  CNT-003:
+    enabled: true
+  CNT-004:
+    enabled: true
+    params:
+      allowed_mounts: []
+
+  # IOC & Runtime
+  IOC-001:
+    enabled: true
+  IOC-002:
+    enabled: true
+  IOC-003:
+    enabled: true

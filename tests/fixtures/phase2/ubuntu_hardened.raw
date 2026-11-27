@@ -1,0 +1,155 @@
+HOST_AUDIT_FORMAT=1.0.0
+HOST_AUDIT_COLLECTOR_VERSION=0.2.0
+HOST_AUDIT_BOUNDARY=b00ndaryubuntu01hardened00000000
+HOST_AUDIT_COLLECTED_AT=2026-11-24T20:00:00Z
+HOST_AUDIT_HOSTNAME=prod-ubuntu-hardened-01
+HOST_AUDIT_EUID=0
+===b00ndaryubuntu01hardened00000000:BEGIN:os_release:CMD=collect_os_release===
+PRETTY_NAME="Ubuntu 24.04.1 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+Linux prod-ubuntu-hardened-01 6.8.0-40-generic #40-Ubuntu SMP PREEMPT_DYNAMIC x86_64 GNU/Linux
+2026-11-24 10:00:00
+===b00ndaryubuntu01hardened00000000:STDERR:os_release===
+===b00ndaryubuntu01hardened00000000:END:os_release:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:users_passwd:CMD=collect_users_passwd===
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+sshd:x:103:65534::/run/sshd:/usr/sbin/nologin
+audituser:x:1000:1000:Audit Admin,,,:/home/audituser:/bin/bash
+===b00ndaryubuntu01hardened00000000:STDERR:users_passwd===
+===b00ndaryubuntu01hardened00000000:END:users_passwd:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:users_group:CMD=collect_users_group===
+root:x:0:
+daemon:x:1:
+sudo:x:27:audituser
+shadow:x:42:
+audituser:x:1000:
+===b00ndaryubuntu01hardened00000000:STDERR:users_group===
+===b00ndaryubuntu01hardened00000000:END:users_group:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:shadow_meta:CMD=collect_shadow_meta===
+640 0:42 root:shadow regular file /etc/shadow
+640 0:42 root:shadow regular file /etc/gshadow
+===b00ndaryubuntu01hardened00000000:STDERR:shadow_meta===
+===b00ndaryubuntu01hardened00000000:END:shadow_meta:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:sudoers:CMD=collect_sudoers===
+### FILE: /etc/sudoers
+Defaults env_reset
+Defaults mail_badpass
+root ALL=(ALL:ALL) ALL
+%sudo ALL=(ALL:ALL) ALL
+===b00ndaryubuntu01hardened00000000:STDERR:sudoers===
+===b00ndaryubuntu01hardened00000000:END:sudoers:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:sshd_effective:CMD=collect_sshd_effective===
+port 22
+permitrootlogin no
+passwordauthentication no
+permitemptypasswords no
+pubkeyauthentication yes
+maxauthtries 3
+x11forwarding no
+permituserenvironment no
+protocol 2
+### FILE: /etc/ssh/sshd_config
+Port 22
+PermitRootLogin no
+PasswordAuthentication no
+===b00ndaryubuntu01hardened00000000:STDERR:sshd_effective===
+===b00ndaryubuntu01hardened00000000:END:sshd_effective:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:listening_sockets:CMD=collect_listening_sockets===
+tcp LISTEN 0 128 0.0.0.0:22 0.0.0.0:* users:(("sshd",pid=842,fd=3))
+tcp LISTEN 0 128 127.0.0.1:5432 127.0.0.1:* users:(("postgres",pid=1102,fd=5))
+===b00ndaryubuntu01hardened00000000:STDERR:listening_sockets===
+===b00ndaryubuntu01hardened00000000:END:listening_sockets:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:processes:CMD=collect_processes===
+1 0 root 0 0 systemd /sbin/init
+842 1 root 0 0 sshd sshd: /usr/sbin/sshd -D
+1102 1 postgres 105 105 postgres /usr/lib/postgresql/16/bin/postgres
+===b00ndaryubuntu01hardened00000000:STDERR:processes===
+===b00ndaryubuntu01hardened00000000:END:processes:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:systemd_units:CMD=collect_systemd_units===
+=== ACTIVE UNITS ===
+ssh.service loaded active running OpenBSD Secure Shell server
+postgresql.service loaded active running PostgreSQL Cluster
+=== UNIT FILES ===
+ssh.service enabled
+postgresql.service enabled
+===b00ndaryubuntu01hardened00000000:STDERR:systemd_units===
+===b00ndaryubuntu01hardened00000000:END:systemd_units:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:cron:CMD=collect_cron===
+### FILE: /etc/crontab
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+17 * * * * root cd / && run-parts --report /etc/cron.hourly
+===b00ndaryubuntu01hardened00000000:STDERR:cron===
+===b00ndaryubuntu01hardened00000000:END:cron:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:suid_sgid:CMD=collect_suid_sgid===
+4755 0:0 /usr/bin/sudo
+4755 0:0 /usr/bin/passwd
+4755 0:0 /usr/bin/newgrp
+=== CAPABILITIES ===
+/usr/bin/ping cap_net_raw=ep
+===b00ndaryubuntu01hardened00000000:STDERR:suid_sgid===
+===b00ndaryubuntu01hardened00000000:END:suid_sgid:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:critical_perms:CMD=collect_critical_perms===
+644 0:0 root:root regular file /etc/passwd
+640 0:42 root:shadow regular file /etc/shadow
+644 0:0 root:root regular file /etc/group
+640 0:42 root:shadow regular file /etc/gshadow
+440 0:0 root:root regular file /etc/sudoers
+600 0:0 root:root regular file /etc/ssh/sshd_config
+700 0:0 root:root directory /root
+=== WORLD WRITABLE DIRECTORIES WITHOUT STICKY BIT ===
+===b00ndaryubuntu01hardened00000000:STDERR:critical_perms===
+===b00ndaryubuntu01hardened00000000:END:critical_perms:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:sysctl:CMD=collect_sysctl===
+kernel.randomize_va_space = 2
+net.ipv4.ip_forward = 0
+kernel.kptr_restrict = 2
+kernel.dmesg_restrict = 1
+kernel.yama.ptrace_scope = 1
+kernel.unprivileged_bpf_disabled = 1
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+fs.suid_dumpable = 0
+===b00ndaryubuntu01hardened00000000:STDERR:sysctl===
+===b00ndaryubuntu01hardened00000000:END:sysctl:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:firewall:CMD=collect_firewall===
+=== UFW STATUS ===
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+22/tcp ALLOW IN Anywhere
+===b00ndaryubuntu01hardened00000000:STDERR:firewall===
+===b00ndaryubuntu01hardened00000000:END:firewall:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:packages:CMD=collect_packages===
+openssh-server	1:9.6p1-3ubuntu13	amd64
+linux-image-generic	6.8.0-40.40	amd64
+sudo	1.9.15p5-3ubuntu5	amd64
+===b00ndaryubuntu01hardened00000000:STDERR:packages===
+===b00ndaryubuntu01hardened00000000:END:packages:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:containers:CMD=collect_containers===
+=== RUNTIME SOCKETS ===
+srw-rw---- 1 root docker 0 Nov 24 10:00 /var/run/docker.sock
+=== DOCKER PS ===
+=== DOCKER INSPECT ===
+[]
+===b00ndaryubuntu01hardened00000000:STDERR:containers===
+===b00ndaryubuntu01hardened00000000:END:containers:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:auth_logs:CMD=collect_auth_logs===
+Nov 24 19:12:01 prod-ubuntu-hardened-01 sshd[1234]: Accepted publickey for audituser from 192.168.1.10 port 52312 ssh2
+===b00ndaryubuntu01hardened00000000:STDERR:auth_logs===
+===b00ndaryubuntu01hardened00000000:END:auth_logs:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu01hardened00000000:BEGIN:ioc_surface:CMD=collect_ioc_surface===
+=== TEMPORARY AND SHARED MEMORY DIRECTORIES ===
+drwxrwxrwt 2 root root 4096 Nov 24 10:00 /tmp
+=== PRELOAD AND BOOTSTRAP HOOKS ===
+=== SSH AUTHORIZED KEYS FILES ===
+600 1000:1000 /home/audituser/.ssh/authorized_keys
+=== PROCESSES WITH DELETED EXECUTABLES ===
+===b00ndaryubuntu01hardened00000000:STDERR:ioc_surface===
+===b00ndaryubuntu01hardened00000000:END:ioc_surface:EXIT=0:TRUNCATED=0===

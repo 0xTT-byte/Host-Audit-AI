@@ -1,0 +1,140 @@
+HOST_AUDIT_FORMAT=1.0.0
+HOST_AUDIT_COLLECTOR_VERSION=0.2.0
+HOST_AUDIT_BOUNDARY=b00ndaryubuntu02vuln000000000000
+HOST_AUDIT_COLLECTED_AT=2026-11-24T20:00:00Z
+HOST_AUDIT_HOSTNAME=vuln-ubuntu-lab-02
+HOST_AUDIT_EUID=0
+===b00ndaryubuntu02vuln000000000000:BEGIN:os_release:CMD=collect_os_release===
+PRETTY_NAME="Ubuntu 22.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+Linux vuln-ubuntu-lab-02 5.15.0-100-generic #110-Ubuntu SMP x86_64 GNU/Linux
+2026-11-24 08:00:00
+===b00ndaryubuntu02vuln000000000000:STDERR:os_release===
+===b00ndaryubuntu02vuln000000000000:END:os_release:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:users_passwd:CMD=collect_users_passwd===
+root:x:0:0:root:/root:/bin/bash
+backdoor:x:0:0:Backdoor Admin:/root:/bin/bash
+games:x:5:60:games:/usr/games:/bin/bash
+victim:x:1001:1001::/home/victim:/bin/bash
+===b00ndaryubuntu02vuln000000000000:STDERR:users_passwd===
+===b00ndaryubuntu02vuln000000000000:END:users_passwd:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:users_group:CMD=collect_users_group===
+root:x:0:
+sudo:x:27:victim
+docker:x:999:victim
+===b00ndaryubuntu02vuln000000000000:STDERR:users_group===
+===b00ndaryubuntu02vuln000000000000:END:users_group:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:shadow_meta:CMD=collect_shadow_meta===
+644 0:0 root:root regular file /etc/shadow
+===b00ndaryubuntu02vuln000000000000:STDERR:shadow_meta===
+===b00ndaryubuntu02vuln000000000000:END:shadow_meta:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:sudoers:CMD=collect_sudoers===
+### FILE: /etc/sudoers
+root ALL=(ALL:ALL) ALL
+victim ALL=(ALL) NOPASSWD: ALL
+victim ALL=(ALL) NOPASSWD: /usr/bin/find
+===b00ndaryubuntu02vuln000000000000:STDERR:sudoers===
+===b00ndaryubuntu02vuln000000000000:END:sudoers:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:sshd_effective:CMD=collect_sshd_effective===
+port 22
+permitrootlogin yes
+passwordauthentication yes
+permitemptypasswords yes
+maxauthtries 8
+x11forwarding yes
+permituserenvironment yes
+protocol 1
+===b00ndaryubuntu02vuln000000000000:STDERR:sshd_effective===
+===b00ndaryubuntu02vuln000000000000:END:sshd_effective:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:listening_sockets:CMD=collect_listening_sockets===
+tcp LISTEN 0 128 0.0.0.0:22 0.0.0.0:* users:(("sshd",pid=501,fd=3))
+tcp LISTEN 0 128 0.0.0.0:5432 0.0.0.0:* users:(("postgres",pid=999,fd=3))
+tcp LISTEN 0 128 0.0.0.0:9000 0.0.0.0:* users:(("python3",pid=1000,fd=4))
+===b00ndaryubuntu02vuln000000000000:STDERR:listening_sockets===
+===b00ndaryubuntu02vuln000000000000:END:listening_sockets:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:processes:CMD=collect_processes===
+1 0 root 0 0 systemd /sbin/init
+501 1 root 0 0 sshd sshd: /usr/sbin/sshd -D
+999 1 postgres 105 105 postgres /usr/lib/postgresql/14/bin/postgres
+1000 1 victim 1001 1001 python3 python3 app.py
+6666 1 root 0 0 miner /tmp/miner (deleted)
+===b00ndaryubuntu02vuln000000000000:STDERR:processes===
+===b00ndaryubuntu02vuln000000000000:END:processes:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:systemd_units:CMD=collect_systemd_units===
+=== ACTIVE UNITS ===
+ssh.service loaded active running OpenBSD Secure Shell server
+docker.service loaded active running Docker Application Container Engine
+=== UNIT FILES ===
+ssh.service enabled
+docker.service enabled
+===b00ndaryubuntu02vuln000000000000:STDERR:systemd_units===
+===b00ndaryubuntu02vuln000000000000:END:systemd_units:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:cron:CMD=collect_cron===
+### FILE: /etc/crontab
+* * * * * root /tmp/evil_cron.sh
+===b00ndaryubuntu02vuln000000000000:STDERR:cron===
+===b00ndaryubuntu02vuln000000000000:END:cron:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:suid_sgid:CMD=collect_suid_sgid===
+4755 0:0 /tmp/bad_suid
+4755 0:0 /usr/bin/vim
+4755 0:0 /usr/bin/sudo
+=== CAPABILITIES ===
+/usr/bin/python3.10 cap_setuid=ep
+===b00ndaryubuntu02vuln000000000000:STDERR:suid_sgid===
+===b00ndaryubuntu02vuln000000000000:END:suid_sgid:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:critical_perms:CMD=collect_critical_perms===
+666 0:0 root:root regular file /etc/passwd
+644 0:0 root:root regular file /etc/shadow
+644 0:0 root:root regular file /etc/group
+440 0:0 root:root regular file /etc/sudoers
+=== WORLD WRITABLE DIRECTORIES WITHOUT STICKY BIT ===
+777 0:0 /tmp/missing_sticky
+===b00ndaryubuntu02vuln000000000000:STDERR:critical_perms===
+===b00ndaryubuntu02vuln000000000000:END:critical_perms:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:sysctl:CMD=collect_sysctl===
+kernel.randomize_va_space = 0
+net.ipv4.ip_forward = 1
+kernel.kptr_restrict = 0
+kernel.dmesg_restrict = 0
+kernel.yama.ptrace_scope = 0
+fs.suid_dumpable = 2
+===b00ndaryubuntu02vuln000000000000:STDERR:sysctl===
+===b00ndaryubuntu02vuln000000000000:END:sysctl:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:firewall:CMD=collect_firewall===
+=== UFW STATUS ===
+Status: inactive
+=== IPTABLES DOCKER-USER CHAIN ===
+-A DOCKER-USER -j RETURN
+===b00ndaryubuntu02vuln000000000000:STDERR:firewall===
+===b00ndaryubuntu02vuln000000000000:END:firewall:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:packages:CMD=collect_packages===
+openssh-server	1:8.9p1-3ubuntu0.6	amd64
+docker-ce	5:24.0.7-1~ubuntu.22.04~jammy	amd64
+===b00ndaryubuntu02vuln000000000000:STDERR:packages===
+===b00ndaryubuntu02vuln000000000000:END:packages:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:containers:CMD=collect_containers===
+=== RUNTIME SOCKETS ===
+srw-rw-rw- 1 root root 0 Nov 24 10:00 /var/run/docker.sock
+=== DOCKER PS ===
+c1234567890a	priv_pwn	alpine:latest	0.0.0.0:8080->80/tcp	Up 2 hours
+=== DOCKER INSPECT ===
+[{"Id":"c1234567890a","Name":"/priv_pwn","Config":{"Image":"alpine:latest"},"HostConfig":{"Privileged":true,"NetworkMode":"host","PidMode":"host","IpcMode":"host","Binds":["/:/host:rw"]},"State":{"Status":"running"}}]
+===b00ndaryubuntu02vuln000000000000:STDERR:containers===
+===b00ndaryubuntu02vuln000000000000:END:containers:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:auth_logs:CMD=collect_auth_logs===
+Nov 24 19:15:01 vuln-ubuntu-lab-02 sshd[2222]: Failed password for root from 203.0.113.55 port 41112 ssh2
+Nov 24 19:15:05 vuln-ubuntu-lab-02 sshd[2222]: Accepted password for root from 203.0.113.55 port 41112 ssh2
+===b00ndaryubuntu02vuln000000000000:STDERR:auth_logs===
+===b00ndaryubuntu02vuln000000000000:END:auth_logs:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu02vuln000000000000:BEGIN:ioc_surface:CMD=collect_ioc_surface===
+=== TEMPORARY AND SHARED MEMORY DIRECTORIES ===
+-rwxr-xr-x 1 root root 12345 Nov 24 12:00 /tmp/miner.elf
+=== PRELOAD AND BOOTSTRAP HOOKS ===
+-rw-r--r-- 1 root root 30 Nov 24 12:00 /etc/ld.so.preload
+/lib/evil_rootkit.so
+=== SSH AUTHORIZED KEYS FILES ===
+=== PROCESSES WITH DELETED EXECUTABLES ===
+lrwxrwxrwx 1 root root 0 Nov 24 12:00 /proc/6666/exe -> /tmp/miner (deleted)
+===b00ndaryubuntu02vuln000000000000:STDERR:ioc_surface===
+===b00ndaryubuntu02vuln000000000000:END:ioc_surface:EXIT=0:TRUNCATED=0===

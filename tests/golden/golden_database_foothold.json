@@ -1,0 +1,53 @@
+{
+  "name": "Database Foothold to Privilege Escalation",
+  "description": "Publicly exposed database combined with elevated sudo rights on database service account",
+  "findings": [
+    {
+      "rule_id": "EXP-002",
+      "domain": "exposure",
+      "title": "PostgreSQL database exposed on all interfaces",
+      "target": "port:5432/tcp:postgres",
+      "evidence": "0.0.0.0:5432",
+      "why_it_matters": "Allows unauthenticated network connections to internal database service",
+      "verify_cmd": "ss -tulpnH | grep ':5432'",
+      "remediation_hint": "Bind postgres to 127.0.0.1 or firewall port 5432",
+      "reachability": 3,
+      "privilege_gain": 2,
+      "ease": 2
+    },
+    {
+      "rule_id": "PRV-002",
+      "domain": "privesc",
+      "title": "Postgres service user has full sudo privileges",
+      "target": "sudoers:postgres:all",
+      "evidence": "postgres ALL=(ALL) ALL",
+      "why_it_matters": "PostgreSQL compromise directly leads to root escalation",
+      "verify_cmd": "sudo -l -U postgres",
+      "remediation_hint": "Revoke sudo permissions from postgres system account",
+      "reachability": 2,
+      "privilege_gain": 3,
+      "ease": 2
+    },
+    {
+      "rule_id": "IOC-001",
+      "domain": "ioc",
+      "title": "Deleted executable running from memory",
+      "target": "process:1337:/tmp/malware",
+      "evidence": "/tmp/malware (deleted)",
+      "why_it_matters": "Indicates execution of an unlinked or stealth binary",
+      "verify_cmd": "ls -l /proc/1337/exe",
+      "remediation_hint": "Terminate process 1337 and perform forensics",
+      "reachability": 2,
+      "privilege_gain": 2,
+      "ease": 1
+    }
+  ],
+  "expected_clusters": [
+    {
+      "finding_ids": ["b9ccc237948a", "bca83f6a4b94"],
+      "hypothesis": "Exposed database service combined with sudo access for postgres user enables external foothold to root compromise",
+      "suggested_priority": "critical"
+    }
+  ],
+  "expected_unclustered": ["54b49993974e"]
+}

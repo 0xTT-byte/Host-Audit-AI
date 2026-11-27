@@ -1,0 +1,81 @@
+# Changelog
+
+All notable changes to `host-audit-ai` will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.5.0] - 2026-11-27
+
+### Added
+- **Core Architecture & Schemas (Phase 0)**:
+  - Strong Pydantic v2 schemas across raw collector envelopes, normalized host snapshots, security findings, audit reports, and drift state.
+  - Strict AST boundary enforcement isolating AI/MCP dependencies exclusively to optional packages.
+- **Agentless 18-Section Collector & Multi-Transport (Phase 1)**:
+  - POSIX/Bash read-only target collector (`collect.sh`) streaming evidence securely over stdout with trap-based ephemeral cleanup.
+  - Section framing with size clamping, anti-spoofing delimiters, and degraded-mode fallback when unprivileged.
+  - Multi-transport execution engine supporting `LocalTransport`, `SSHTransport`, and `OfflineTransport`.
+- **Deterministic Evaluation & Policy Engine (Phase 2)**:
+  - 9 pure parsers extracting normalized state (network listeners, processes, services, cron, users, sudoers, file permissions, kernel parameters, firewall rules, containers, IOCs).
+  - RuleRegistry with 31 deterministic security rules spanning 7 categories (`exposure`, `ssh_users`, `containers`, `fs_cron`, `kernel_fw`, `privesc`, `ioc`).
+  - YAML baseline policy loader (`default.yaml`) and expiring waiver engine.
+- **Deterministic Exposure Correlator & SQLite Drift Store (Phase 3)**:
+  - Pre-LLM 4-class graph exposure correlator constructing multi-stage attack chains without LLM inference.
+  - `0o600` file-permission SQLite audit history database (`AuditStore`) with schema migrations.
+  - 3-run drift diff engine (`diff_runs`) tracking `NEW`, `PERSISTING`, and `RESOLVED` findings across audit runs.
+  - Multi-format report exporters: standard JSON, SARIF 2.1.0, human-readable Markdown, and sanitized context-bounded `ai-bundle`.
+  - Comprehensive CLI subcommands: `scan`, `diff`, `export`, and `runs`.
+- **Hardened Remote Provisioning & Scoped MCP Servers (Phase 4)**:
+  - Target-side POSIX forced-command wrapper script (`host-audit-wrapper.sh`) restricting SSH key capabilities to 6 read-only verbs with strict path and argument validation.
+  - Zero-AI `host-audit init-target` command generating hardened `authorized_keys` bundles and installation guides.
+  - Read-only `audit-ssh` FastMCP server exposing parameterized inspection tools without shell execution capabilities.
+  - Security-isolated `JailedSkillsWriter` enforcing target directory path traversal protection (`0o644`, `O_NOFOLLOW`).
+
+## [0.2.0] - 2026-11-24
+
+### Added
+- **Optional Local LLM Triage Layer**:
+  - Integrated local AI triage powered by Ollama, activated via optional extra `host-audit-ai[llm]`.
+  - Added CLI flags `--triage`, `--model`, `--ollama-host`, and `--triage-timeout` (with `OLLAMA_MODEL` and `OLLAMA_HOST` environment variable fallbacks).
+  - Triage is disabled by default; base package installation gains no new dependencies and functions identically.
+  - LLM triage is strictly advisory: it clusters related findings and hypothesizes root causes without altering, adding, removing, or re-scoring deterministic findings.
+- **Security & Delimiter Breakout Defenses**:
+  - Strict XML escaping for `&`, `<`, and `>` (`&` escaped first) in evidence and attribute quote escaping before embedding in `<finding>` and `<evidence>` tags.
+  - Control characters stripped after escaping decisions to prevent prompt structure manipulation.
+- **Untrusted Output Protection for Verification Checks**:
+  - Conservative command validator rejecting shell metacharacters (`|`, `;`, `&&`, `||`, backticks, `$(`, `>`, `<`), exfiltration utilities (`curl`, `wget`, `nc`, `bash -c`), arbitrary URLs, and restricting `cat` to `/etc` and `/var/log`.
+  - Allowed commands restricted to safe read-only system utilities (`ALLOWED_CHECK_BINARIES`).
+  - Next checks rendered in reports strictly inside fenced code blocks under the header `Model-suggested, unverified - review before running`.
+  - Dropped checks tracked in triage provenance and stats.
+- **Enhanced Redactor & Seeding**:
+  - Shared `Redactor` instance across all batches and the second-pass merge pass.
+  - Pre-seeded with known hostnames, usernames, and IPs extracted from collector targets and baseline context before running heuristic fallback regexes.
+  - De-redaction applied to hypotheses, next_checks, and cluster summaries using longest-placeholder-first matching to prevent partial prefix replacements (e.g. `IP_1` vs `IP_10`).
+  - Unmapped / model-invented placeholders preserved intact and counted in `unknown_placeholders`.
+- **Strict Finding Coverage Invariant**:
+  - Enforced post-condition: every input finding ID appears exactly once across clusters and unclustered findings.
+  - Omitted findings appended deterministically to `unclustered`; cross-cluster duplicate assignments deduplicated (first retained).
+- **Time Budget & Fault-Tolerant Partial Runs**:
+  - Configurable `--triage-timeout` (default 900s) wall-clock budget. On budget exhaustion, completed batches are preserved, uncovered findings are routed to `unclustered`, and `triage.status` is set to `partial`.
+  - Connection failures and schema errors after retry are marked `skipped` with audit exit code remaining 0.
+- **Flag Semantics & Legacy Path Reconciliation**:
+  - Mutually exclusive validation: passing `--triage` and `--no-llm` simultaneously terminates with exit code 2.
+  - `--ollama-url` marked as a deprecated alias of `--ollama-host` emitting a `DeprecationWarning`.
+  - Retained legacy `llm_client.py` as an isolated path under `--legacy-llm` outputting to its own separate `legacy_triage` key and `triage_report.json` without conflicting with `triage`.
+- **Host-Isolated Stable Finding IDs**:
+  - `Finding.id`: 12-character SHA-256 hash incorporating host context (`f"{host}:{rule_id}:{norm_evidence}"`) to prevent collisions across multi-host audits.
+  - `Finding.finding_id`: 64-character full SHA-256 hash retained for SQLite state history tracking.
+- **Benchmark Evaluation Harness**:
+  - Added `scripts/eval_triage.py` and 3 golden benchmark datasets (`tests/golden/*.json`) measuring cluster precision/recall, schema-failure rate, and hallucinated-ID rate.
+
+### Removed
+- Removed dead and legacy prototype files: `analyze.py`, `Collector_Skeleton.sh`, `engine/`, and typo directory `assest/`.
+
+## [0.1.0] - 2026-11-23
+
+### Added
+- Initial release of `host-audit-ai`.
+- Agentless read-only Bash collection over SSH (`collect/audit-collect.sh`).
+- Deterministic baseline policy engine (`exposure`, `ssh`, `containers`, `privesc`, `ioc`).
+- SQLite audit history state store tracking `new`, `persisting`, and `resolved` findings.
+- Jinja2-rendered Markdown audit reporting (`report.md`) and JSON serialization (`findings.json`).

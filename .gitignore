@@ -8,6 +8,8 @@ triage_report.json
 
 # Python environments and caches
 .venv/
+.venv-p0/
+.venv-crew/
 __pycache__/
 *.py[cod]
 *$py.class

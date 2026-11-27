@@ -1,0 +1,66 @@
+{
+  "name": "SSH Root & Password Auth Exposure",
+  "description": "Publicly exposed SSH service with root login permitted and password authentication enabled",
+  "findings": [
+    {
+      "rule_id": "SSH-001",
+      "domain": "ssh",
+      "title": "Root SSH login permitted",
+      "target": "sshd:PermitRootLogin",
+      "evidence": "PermitRootLogin yes",
+      "why_it_matters": "Enables direct brute force attacks against root account",
+      "verify_cmd": "sshd -T | grep permitrootlogin",
+      "remediation_hint": "Set PermitRootLogin no in sshd_config",
+      "reachability": 3,
+      "privilege_gain": 3,
+      "ease": 2
+    },
+    {
+      "rule_id": "SSH-003",
+      "domain": "ssh",
+      "title": "SSH password authentication permitted",
+      "target": "sshd:PasswordAuthentication",
+      "evidence": "PasswordAuthentication yes",
+      "why_it_matters": "Increases credential guessing risk compared to public key auth",
+      "verify_cmd": "sshd -T | grep passwordauthentication",
+      "remediation_hint": "Set PasswordAuthentication no in sshd_config",
+      "reachability": 3,
+      "privilege_gain": 2,
+      "ease": 2
+    },
+    {
+      "rule_id": "EXP-001",
+      "domain": "exposure",
+      "title": "SSH daemon listening on all interfaces",
+      "target": "port:22/tcp:sshd",
+      "evidence": "0.0.0.0:22",
+      "why_it_matters": "SSH exposed to untrusted network traffic",
+      "verify_cmd": "ss -tulpnH | grep ':22'",
+      "remediation_hint": "Restrict SSH to management subnet via firewall",
+      "reachability": 3,
+      "privilege_gain": 2,
+      "ease": 2
+    },
+    {
+      "rule_id": "EXP-005",
+      "domain": "exposure",
+      "title": "Local loopback NTP listener",
+      "target": "port:123/udp:chrony",
+      "evidence": "127.0.0.1:123",
+      "why_it_matters": "Internal time sync listener",
+      "verify_cmd": "ss -ulpnH | grep ':123'",
+      "remediation_hint": "Keep bound to loopback",
+      "reachability": 1,
+      "privilege_gain": 1,
+      "ease": 1
+    }
+  ],
+  "expected_clusters": [
+    {
+      "finding_ids": ["cac5995fce8e", "626f990550ba", "1f6a888b4474"],
+      "hypothesis": "Publicly exposed SSH port with root login and password authentication permits brute force access",
+      "suggested_priority": "critical"
+    }
+  ],
+  "expected_unclustered": ["7dfc418fb7e6"]
+}

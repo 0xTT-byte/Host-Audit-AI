@@ -1,0 +1,102 @@
+HOST_AUDIT_FORMAT=1.0.0
+HOST_AUDIT_COLLECTOR_VERSION=0.2.0
+HOST_AUDIT_BOUNDARY=b00ndaryrheldegraded0300000000000
+HOST_AUDIT_COLLECTED_AT=2026-11-24T20:00:00Z
+HOST_AUDIT_HOSTNAME=rhel9-degraded-worker
+HOST_AUDIT_EUID=1001
+===b00ndaryrheldegraded0300000000000:BEGIN:os_release:CMD=collect_os_release===
+PRETTY_NAME="Red Hat Enterprise Linux 9.4 (Plow)"
+NAME="Red Hat Enterprise Linux"
+VERSION_ID="9.4"
+Linux rhel9-degraded-worker 5.14.0-427.el9.x86_64 #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux
+2026-11-24 11:30:00
+===b00ndaryrheldegraded0300000000000:STDERR:os_release===
+===b00ndaryrheldegraded0300000000000:END:os_release:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:users_passwd:CMD=collect_users_passwd===
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+worker:x:1001:1001:Worker User:/home/worker:/bin/bash
+malformed_passwd_line_without_colons
+===b00ndaryrheldegraded0300000000000:STDERR:users_passwd===
+===b00ndaryrheldegraded0300000000000:END:users_passwd:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:users_group:CMD=collect_users_group===
+root:x:0:
+wheel:x:10:worker
+===b00ndaryrheldegraded0300000000000:STDERR:users_group===
+===b00ndaryrheldegraded0300000000000:END:users_group:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:shadow_meta:CMD=collect_shadow_meta===
+000 0:0 root:root regular file /etc/shadow
+===b00ndaryrheldegraded0300000000000:STDERR:shadow_meta===
+stat: cannot stat '/etc/gshadow': Permission denied
+===b00ndaryrheldegraded0300000000000:END:shadow_meta:EXIT=1:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:sudoers:CMD=collect_sudoers===
+===b00ndaryrheldegraded0300000000000:STDERR:sudoers===
+cat: /etc/sudoers: Permission denied
+===b00ndaryrheldegraded0300000000000:END:sudoers:EXIT=1:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:sshd_effective:CMD=collect_sshd_effective===
+### FILE: /etc/ssh/sshd_config
+Port 22
+PermitRootLogin no
+PasswordAuthentication no
+===b00ndaryrheldegraded0300000000000:STDERR:sshd_effective===
+sshd -T requires root privileges
+===b00ndaryrheldegraded0300000000000:END:sshd_effective:EXIT=1:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:listening_sockets:CMD=collect_listening_sockets===
+tcp LISTEN 0 128 [::]:22 [::]:*
+===b00ndaryrheldegraded0300000000000:STDERR:listening_sockets===
+===b00ndaryrheldegraded0300000000000:END:listening_sockets:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:processes:CMD=collect_processes===
+1 0 root 0 0 systemd /usr/lib/systemd/systemd
+900 1 worker 1001 1001 bash /bin/bash
+===b00ndaryrheldegraded0300000000000:STDERR:processes===
+===b00ndaryrheldegraded0300000000000:END:processes:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:systemd_units:CMD=collect_systemd_units===
+=== ACTIVE UNITS ===
+sshd.service loaded active running OpenSSH server daemon
+=== UNIT FILES ===
+sshd.service enabled
+===b00ndaryrheldegraded0300000000000:STDERR:systemd_units===
+===b00ndaryrheldegraded0300000000000:END:systemd_units:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:cron:CMD=collect_cron===
+=== CRON SPOOLS AND DIRECTORIES ===
+===b00ndaryrheldegraded0300000000000:STDERR:cron===
+===b00ndaryrheldegraded0300000000000:END:cron:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:suid_sgid:CMD=collect_suid_sgid===
+4755 0:0 /usr/bin/sudo
+=== CAPABILITIES ===
+===b00ndaryrheldegraded0300000000000:STDERR:suid_sgid===
+===b00ndaryrheldegraded0300000000000:END:suid_sgid:EXIT=0:TRUNCATED=0===
+===b00ndaryubuntu:skip_missing_section_test===
+===b00ndaryrheldegraded0300000000000:BEGIN:sysctl:CMD=collect_sysctl===
+kernel.randomize_va_space = 2
+kernel.kptr_restrict = 1
+kernel.dmesg_restrict = 1
+===b00ndaryrheldegraded0300000000000:STDERR:sysctl===
+===b00ndaryrheldegraded0300000000000:END:sysctl:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:firewall:CMD=collect_firewall===
+=== NFTABLE RULESET ===
+table inet filter { chain input { type filter hook input priority filter; policy drop; } }
+===b00ndaryrheldegraded0300000000000:STDERR:firewall===
+===b00ndaryrheldegraded0300000000000:END:firewall:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:packages:CMD=collect_packages===
+systemd	252-32.el9	x86_64
+kernel	5.14.0-427.el9	x86_64
+openssh-server	8.7p1-38.el9	x86_64
+===b00ndaryrheldegraded0300000000000:STDERR:packages===
+===b00ndaryrheldegraded0300000000000:END:packages:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:containers:CMD=collect_containers===
+=== RUNTIME SOCKETS ===
+===b00ndaryrheldegraded0300000000000:STDERR:containers===
+===b00ndaryrheldegraded0300000000000:END:containers:EXIT=0:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:auth_logs:CMD=collect_auth_logs===
+===b00ndaryrheldegraded0300000000000:STDERR:auth_logs===
+Permission denied reading /var/log/secure
+===b00ndaryrheldegraded0300000000000:END:auth_logs:EXIT=1:TRUNCATED=0===
+===b00ndaryrheldegraded0300000000000:BEGIN:ioc_surface:CMD=collect_ioc_surface===
+=== TEMPORARY AND SHARED MEMORY DIRECTORIES ===
+=== PRELOAD AND BOOTSTRAP HOOKS ===
+=== SSH AUTHORIZED KEYS FILES ===
+=== PROCESSES WITH DELETED EXECUTABLES ===
+===b00ndaryrheldegraded0300000000000:STDERR:ioc_surface===
+===b00ndaryrheldegraded0300000000000:END:ioc_surface:EXIT=0:TRUNCATED=0===
