@@ -25,8 +25,19 @@ def _check_import(module_name: str, file_path: Path) -> list[str]:
     return violations
 
 
+def _walk_top_level_only(node: ast.AST) -> list[ast.AST]:
+    """Yield AST nodes at module top-level without descending into function bodies."""
+    nodes: list[ast.AST] = []
+    for child in ast.iter_child_nodes(node):
+        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        nodes.append(child)
+        nodes.extend(_walk_top_level_only(child))
+    return nodes
+
+
 def test_architecture_boundary_ast() -> None:
-    """Assert models, collectors, parsers, engine, storage, exporters, and cli never import AI."""
+    """Assert core packages never import AI, and cli.py never imports AI at top level."""
     repo_root = Path(__file__).resolve().parent.parent
     src_dir = repo_root / "src" / "host_audit_ai"
 
@@ -44,10 +55,6 @@ def test_architecture_boundary_ast() -> None:
         if d.exists():
             py_files.extend(d.rglob("*.py"))
 
-    cli_file = src_dir / "cli.py"
-    if cli_file.exists():
-        py_files.append(cli_file)
-
     assert py_files, "Expected to find python source files to check"
 
     all_violations: list[str] = []
@@ -59,6 +66,16 @@ def test_architecture_boundary_ast() -> None:
                     all_violations.extend(_check_import(alias.name, file_path))
             elif isinstance(node, ast.ImportFrom) and node.module:
                 all_violations.extend(_check_import(node.module, file_path))
+
+    cli_file = src_dir / "cli.py"
+    if cli_file.exists():
+        cli_tree = ast.parse(cli_file.read_text(encoding="utf-8"), filename=str(cli_file))
+        for node in _walk_top_level_only(cli_tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    all_violations.extend(_check_import(alias.name, cli_file))
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                all_violations.extend(_check_import(node.module, cli_file))
 
     assert not all_violations, "Architecture boundary violations found:\n" + "\n".join(
         all_violations

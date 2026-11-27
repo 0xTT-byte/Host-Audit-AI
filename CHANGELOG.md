@@ -5,6 +5,28 @@ All notable changes to `host-audit-ai` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-11-27
+
+### Added
+- **BYOM LLM Configuration & Model Adapter (`crew/llm.py`)**:
+  - Precedence configuration loader merging defaults, `~/.config/host-audit-ai/llm.yaml`, `HOST_AUDIT_LLM_*` environment variables, and CLI overrides.
+  - Multi-provider support (Ollama, OpenAI-compatible, Anthropic) with model parsing, safe redacted summaries, and lazy CrewAI `LLM` instantiation.
+  - 4B GGUF model compatibility pipeline with `stream=False`, `temperature=0.1`, `max_iter=3`, `allow_delegation=False`, and automated `<think>...</think>` tag and Markdown code-fence stripping before Pydantic validation.
+- **Deterministic PII Sanitization Firewall (`crew/sanitizer.py`)**:
+  - High-assurance token extractor collecting all forbidden tokens (IPs, hostnames, usernames, internal subnets) from raw host telemetry.
+  - Automated prompt-injection insulation wrapping raw evidence in `<untrusted_host_telemetry>` boundaries.
+  - Outbound query generator restricting Web Search queries strictly to public technology and vulnerability identifiers (CVEs, service names, software versions).
+  - Pre-flight firewall assertion (`assert_no_host_leakage`) preventing accidental data exfiltration before Web Search execution.
+- **Three-Stage Discrete CrewAI Triage Pipeline (`crew/agents.py`, `crew/tasks.py`, `crew/pipeline.py`)**:
+  - Discrete single-stage `Crew` kickoffs with `memory=False` and `Process.sequential` to eliminate implicit context bleed.
+  - Stage 1 (Verification Agent): Scoped read-only investigation using parameterized `audit-ssh` tools to verify active findings without full shell access.
+  - Temporal air-gap firewall: Deterministic sanitization pass executing strictly between Stage 1 and Stage 2.
+  - Stage 2 (Threat Intel Agent): Search queries filtered through the sanitizer firewall using scoped Web Search tools to look up relevant CVE advisories and mitigation guidance.
+  - Stage 3 (Remediation Planner Agent): Generates structured remediation playbooks and security hardening recommendations, constrained to write skills exclusively through `JailedSkillsWriter` with on-disk SHA-256 verification and optional `human_input=True` approval gate.
+- **CLI Subcommand & Persistence Integration**:
+  - `host-audit triage` command supporting `--dry-run-sanitizer`, `--no-web`, `--ssh-target`, `--human-input`, `--model`, and custom LLM provider configuration.
+  - SQLite persistence integration recording `triage_runs` linked to parent audit runs with JSON-serialized findings, evidence, threat intel, and artifact metadata.
+
 ## [0.5.0] - 2026-11-27
 
 ### Added

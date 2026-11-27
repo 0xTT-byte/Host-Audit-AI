@@ -889,10 +889,132 @@ def export(
 
 
 @app.command()
-def triage() -> None:
+def triage(
+    run_id: Annotated[
+        str | None,
+        typer.Argument(
+            help="Audit run ID to triage (defaults to latest run in SQLite store).",
+        ),
+    ] = None,
+    input_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--input",
+            "-i",
+            help="Path to an offline AuditReport JSON file (mutually exclusive with <run_id>).",
+        ),
+    ] = None,
+    db_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--db",
+            help="Override SQLite audit database path.",
+        ),
+    ] = None,
+    llm_config: Annotated[
+        Path | None,
+        typer.Option(
+            "--llm-config",
+            help="Path to llm.yaml configuration file.",
+        ),
+    ] = None,
+    model: Annotated[
+        str | None,
+        typer.Option(
+            "--model",
+            help="Override LLM model identifier (e.g., ollama/...).",
+        ),
+    ] = None,
+    base_url: Annotated[
+        str | None,
+        typer.Option(
+            "--base-url",
+            help="Override LLM endpoint base URL.",
+        ),
+    ] = None,
+    ssh_target: Annotated[
+        str | None,
+        typer.Option(
+            "--ssh-target",
+            help="Optional ssh://[user@]host[:port] for live read-only Stage 1 verification.",
+        ),
+    ] = None,
+    identity: Annotated[
+        Path | None,
+        typer.Option(
+            "--identity",
+            help="SSH private key path (required when --ssh-target is set).",
+        ),
+    ] = None,
+    accept_new_host_key: Annotated[
+        bool,
+        typer.Option(
+            "--accept-new-host-key",
+            help="Accept new SSH host keys for Stage 1 audit-ssh (default: strict).",
+        ),
+    ] = False,
+    no_web: Annotated[
+        bool,
+        typer.Option(
+            "--no-web",
+            help="Skip Stage 2 web MCP research (pure offline/local triage).",
+        ),
+    ] = False,
+    skills_dir: Annotated[
+        Path,
+        typer.Option(
+            "--skills-dir",
+            help="Output directory for generated remediation scripts.",
+        ),
+    ] = Path("./skills"),
+    human_input: Annotated[
+        bool,
+        typer.Option(
+            "--human-input/--no-human-input",
+            help="Pause for human confirmation at Stage 3 remediation builder.",
+        ),
+    ] = True,
+    dry_run_sanitizer: Annotated[
+        bool,
+        typer.Option(
+            "--dry-run-sanitizer",
+            help="Run only the deterministic sanitizer firewall and print Stage 2 JSON queries.",
+        ),
+    ] = False,
+    no_save: Annotated[
+        bool,
+        typer.Option(
+            "--no-save",
+            help="Do not persist TriageReport into SQLite triage_runs.",
+        ),
+    ] = False,
+    json_output: Annotated[
+        bool,
+        typer.Option(
+            "--json",
+            help="Emit TriageReport JSON to stdout.",
+        ),
+    ] = False,
+    out: Annotated[
+        Path | None,
+        typer.Option(
+            "--out",
+            "-o",
+            help="Write TriageReport JSON to output file.",
+        ),
+    ] = None,
+) -> None:
     """Run local AI triage and root cause correlation (requires [crew] optional extra)."""
+    if run_id is not None and input_file is not None:
+        typer.secho(
+            "Error: Provide either <run_id> or --input <report.json> (not both).",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
     # Lazy dependency check for crewai without importing at module top level
-    if importlib.util.find_spec("crewai") is None:
+    if not dry_run_sanitizer and importlib.util.find_spec("crewai") is None:
         typer.secho(
             "Error: CrewAI optional dependencies are not installed.\n"
             'Please install them using: uv pip install "host-audit-ai[crew]"',
@@ -901,8 +1023,139 @@ def triage() -> None:
         )
         raise typer.Exit(code=1)
 
-    typer.secho("Not yet implemented (Phase 5: Multi-Agent Triage Crew)", fg=typer.colors.YELLOW)
-    raise typer.Exit(code=1)
+    try:
+        snapshot = None
+        loaded_from_sqlite = False
+        if input_file is not None:
+            if not input_file.is_file():
+                typer.secho(
+                    f"Error: Input file not found: {input_file}",
+                    fg=typer.colors.RED,
+                    err=True,
+                )
+                raise typer.Exit(code=1)
+            report = AuditReport.model_validate_json(input_file.read_text(encoding="utf-8"))
+        else:
+            with AuditStore(db_path=db_path) as store:
+                if run_id is not None:
+                    loaded_report = store.get_run(run_id)
+                    if loaded_report is None:
+                        typer.secho(
+                            f"Error: Run '{run_id}' not found in audit store.",
+                            fg=typer.colors.RED,
+                            err=True,
+                        )
+                        raise typer.Exit(code=1)
+                    report = loaded_report
+                    snapshot = store.get_snapshot(run_id)
+                else:
+                    recent_runs = store.list_runs(limit=1)
+                    if not recent_runs:
+                        typer.secho(
+                            "Error: No audit runs found in audit store. "
+                            "Run 'host-audit scan' first.",
+                            fg=typer.colors.RED,
+                            err=True,
+                        )
+                        raise typer.Exit(code=1)
+                    latest_id = recent_runs[0].run_id
+                    loaded_latest = store.get_run(latest_id)
+                    if loaded_latest is None:
+                        typer.secho(
+                            f"Error: Run '{latest_id}' could not be loaded.",
+                            fg=typer.colors.RED,
+                            err=True,
+                        )
+                        raise typer.Exit(code=1)
+                    report = loaded_latest
+                    snapshot = store.get_snapshot(latest_id)
+            loaded_from_sqlite = True
+
+        if dry_run_sanitizer:
+            from host_audit_ai.crew.sanitizer import build_sanitized_queries
+
+            sanitized_items = build_sanitized_queries(report=report, snapshot=snapshot)
+            rendered_sanitized = json.dumps(
+                [item.model_dump() for item in sanitized_items],
+                indent=2,
+            )
+            if out is not None:
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_text(rendered_sanitized, encoding="utf-8")
+                typer.echo(f"[host-audit] Wrote sanitized queries to {out}", err=True)
+            else:
+                typer.echo(rendered_sanitized)
+            return
+
+        from host_audit_ai.crew.llm import load_llm_config
+        from host_audit_ai.crew.mcp_tools import SSHServerConfig
+        from host_audit_ai.crew.pipeline import TriagePipelineOptions, run_triage_pipeline
+
+        ssh_cfg: SSHServerConfig | None = None
+        if ssh_target is not None:
+            if identity is None:
+                typer.secho(
+                    "Error: --identity <private_key> is required when --ssh-target is set.",
+                    fg=typer.colors.RED,
+                    err=True,
+                )
+                raise typer.Exit(code=1)
+            ssh_cfg = SSHServerConfig(
+                target=ssh_target,
+                identity_file=identity,
+                known_hosts_policy="accept-new" if accept_new_host_key else "strict",
+            )
+
+        llm_cfg = load_llm_config(
+            config_path=llm_config,
+            cli_overrides={"model": model, "base_url": base_url},
+        )
+        options = TriagePipelineOptions(
+            llm_config=llm_cfg,
+            ssh_config=ssh_cfg,
+            enable_web_research=not no_web,
+            skills_dir=skills_dir,
+            human_input=human_input,
+        )
+        triage_report = run_triage_pipeline(report=report, snapshot=snapshot, options=options)
+
+        if loaded_from_sqlite and not no_save:
+            with AuditStore(db_path=db_path) as store:
+                triage_id = store.save_triage(triage_report)
+            typer.echo(f"[host-audit] Saved triage run: {triage_id}", err=True)
+
+        rendered_json = triage_report.model_dump_json(indent=2)
+        if out is not None:
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(rendered_json, encoding="utf-8")
+            typer.echo(f"[host-audit] Wrote triage report to {out}", err=True)
+
+        if json_output:
+            typer.echo(rendered_json)
+        elif out is None:
+            console = Console()
+            console.print(f"[bold]Triage Run:[/bold] {triage_report.run_id}")
+            console.print(f"[bold]LLM Model:[/bold] {triage_report.llm_model}")
+            console.print(f"\n[bold]Executive Summary:[/bold]\n{triage_report.executive_summary}")
+            console.print(
+                f"\nVerified evidence: {len(triage_report.verified_evidence)} | "
+                f"Advisories: {len(triage_report.advisories)} | "
+                f"Artifacts: {len(triage_report.artifacts)}"
+            )
+            if triage_report.artifacts:
+                table = Table(title="Generated Remediation Artifacts (Unapproved Drafts)")
+                table.add_column("Filename", style="cyan")
+                table.add_column("Language")
+                table.add_column("SHA-256")
+                table.add_column("Summary")
+                for art in triage_report.artifacts:
+                    table.add_row(art.filename, art.language, art.sha256 or "", art.summary)
+                console.print(table)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        typer.secho(f"Triage error: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from e
 
 
 @app.command(name="init-target")

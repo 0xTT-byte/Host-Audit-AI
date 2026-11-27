@@ -71,6 +71,31 @@ class RemediationArtifact(BaseModel):
     sha256: str | None = None
 
 
+class VerifiedEvidenceBundle(BaseModel):
+    """Structured Stage 1 output wrapping verified evidence observations."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[VerifiedEvidence] = Field(default_factory=list)
+
+
+class AdvisoryBundle(BaseModel):
+    """Structured Stage 2 output wrapping sanitized advisory matches."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[AdvisoryMatch] = Field(default_factory=list)
+
+
+class Stage3Plan(BaseModel):
+    """Structured Stage 3 synthesis output wrapping executive summary and artifact plans."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    executive_summary: str
+    artifacts: list[RemediationArtifact] = Field(default_factory=list)
+
+
 class TriageReport(BaseModel):
     """Automated AI triage and correlation report."""
 

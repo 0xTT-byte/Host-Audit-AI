@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "host-audit-ai"
-version = "0.5.0"
+version = "0.6.0"
 description = "Agentless Linux & Docker host security auditing tool with deterministic baseline diffing and local AI triage"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
@@ -63,6 +63,10 @@ exclude = [
     "^src/host_audit_ai/legacy",
     "^scripts",
 ]
+
+[[tool.mypy.overrides]]
+module = ["crewai", "crewai.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

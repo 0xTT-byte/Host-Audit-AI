@@ -34,6 +34,7 @@ class JailedSkillsWriter:
     def __init__(self, base_dir: Path = Path("./skills"), max_bytes: int = 65536) -> None:
         self.base_dir = base_dir
         self.max_bytes = max_bytes
+        self.written_artifacts: list[RemediationArtifact] = []
 
     def _validate_filename(
         self, filename: str
@@ -93,13 +94,18 @@ class JailedSkillsWriter:
             os.chmod(candidate, 0o644)
 
         digest = hashlib.sha256(encoded).hexdigest()
-        return RemediationArtifact(
+        artifact = RemediationArtifact(
             filename=clean_name,
             language=lang,
             summary=summary.strip(),
             approved=False,
             sha256=digest,
         )
+        self.written_artifacts = [
+            existing for existing in self.written_artifacts if existing.filename != clean_name
+        ]
+        self.written_artifacts.append(artifact)
+        return artifact
 
 
 class _SkillsWriterInput(BaseModel):

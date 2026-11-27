@@ -47,12 +47,15 @@ from host_audit_ai.models.snapshot import (
     UserAccount,
 )
 from host_audit_ai.models.triage import (
+    AdvisoryBundle,
     AdvisoryMatch,
     LLMConfig,
     RemediationArtifact,
     SanitizedQueryItem,
+    Stage3Plan,
     TriageReport,
     VerifiedEvidence,
+    VerifiedEvidenceBundle,
 )
 
 __all__ = [
@@ -60,6 +63,7 @@ __all__ = [
     "AIBundleChain",
     "AIBundleFinding",
     "AIBundlePackage",
+    "AdvisoryBundle",
     "AdvisoryMatch",
     "AuditReport",
     "AuditSummary",
@@ -93,12 +97,14 @@ __all__ = [
     "ServiceUnit",
     "Severity",
     "SshdConfig",
+    "Stage3Plan",
     "SudoRule",
     "SuidBinary",
     "SysctlEntry",
     "TriageReport",
     "UserAccount",
     "VerifiedEvidence",
+    "VerifiedEvidenceBundle",
     "WaiverRule",
     "compute_fingerprint",
 ]
